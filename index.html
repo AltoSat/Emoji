@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>絵文字登録帳</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --emoji-size: 28px;
+    --tile-min: 72px;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #f6f7f9;
+    color: #1f2937;
+  }
+
+  .app {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  h1 { font-size: 22px; margin: 0; }
+
+  .search-wrap { flex: 1 1 220px; max-width: 360px; }
+
+  input[type="search"],
+  input[type="text"],
+  textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 16px;
+    background: #fff;
+    color: inherit;
+  }
+
+  textarea { min-height: 110px; resize: vertical; }
+
+  button {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #1f2937;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  button:hover { background: #f3f4f6; }
+
+  button.primary {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+  }
+  button.primary:hover { background: #1d4ed8; }
+
+  button.danger {
+    border-color: #fca5a5;
+    color: #b91c1c;
+  }
+  button.danger:hover { background: #fef2f2; }
+
+  button.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+  }
+
+  .panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  .tab {
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 8px 14px;
+    flex: 0 0 auto;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .inline-form {
+    display: none;
+    gap: 8px;
+    align-items: center;
+    flex: 1 1 240px;
+  }
+
+  .inline-form.open { display: flex; }
+
+  .inline-form input { flex: 1 1 160px; }
+
+  .list-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .list-header h2 { font-size: 17px; margin: 0; }
+  #count { color: #6b7280; font-size: 13px; }
+
+  .size-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .size-controls .label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-right: 2px;
+  }
+
+  .size-controls button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+    gap: 8px;
+  }
+
+  .emoji-btn {
+    position: relative;
+    min-height: calc(var(--emoji-size) + 28px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    overflow: hidden;
+  }
+
+  .emoji-char {
+    font-size: var(--emoji-size);
+    line-height: 1;
+  }
+
+  .tab-badge {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 3px;
+    font-size: 9px;
+    color: #6b7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    color: #6b7280;
+    margin: 8px 0;
+    font-size: 14px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%) translateY(12px);
+    background: #111827;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s ease;
+    z-index: 100;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .storage-warning {
+    display: none;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    color: #9a3412;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .storage-warning.show { display: block; }
+
+  @media (max-width: 560px) {
+    .app { padding: 10px; }
+    h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>絵文字登録帳</h1>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="絵文字・タブ名で検索">
+    </div>
+  </header>
+
+  <div id="storageWarning" class="storage-warning">
+    この環境では保存領域が使えないため、ページを閉じるとデータは消えます。
+  </div>
+
+  <section class="panel">
+    <div id="tabs" class="tabs"></div>
+    <div class="row">
+      <button id="addTabBtn" type="button">＋ タブ追加</button>
+      <button id="renameTabBtn" type="button">名前変更</button>
+      <button id="deleteTabBtn" type="button" class="danger">削除</button>
+    </div>
+    <div id="tabForm" class="inline-form" style="margin-top:10px;">
+      <input id="tabNameInput" type="text" placeholder="タブ名を入力" maxlength="40">
+      <button id="tabFormOk" type="button" class="primary">OK</button>
+      <button id="tabFormCancel" type="button">キャンセル</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <textarea id="emojiInput" placeholder="ここに絵文字を大量に貼り付けてください"></textarea>
+    <div class="row" style="margin-top:10px;">
+      <button id="registerBtn" class="primary" type="button">選択中のタブに登録</button>
+      <button id="clearBtn" type="button">入力クリア</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="list-header">
+      <h2 id="listTitle">マイ絵文字</h2>
+      <div class="row" style="gap:10px;">
+        <span id="count"></span>
+        <div class="size-controls">
+          <span class="label">文字サイズ</span>
+          <button type="button" data-size="small">小</button>
+          <button type="button" data-size="medium" class="active">中</button>
+          <button type="button" data-size="large">大</button>
+          <button type="button" data-size="xlarge">特大</button>
+        </div>
+      </div>
+    </div>
+    <div id="emojiGrid" class="emoji-grid"></div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'emoji-registry-v2';
+  var SIZE_KEY = 'emoji-registry-size-v2';
+
+  // ---- 保存（localStorage が使えなければメモリ） ----
+  var storageAvailable = (function () {
+    try {
+      var k = '__test__';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  })();
+
+  var memoryStore = {};
+
+  function storageGet(key) {
+    if (storageAvailable) {
+      try { return window.localStorage.getItem(key); } catch (e) {}
+    }
+    return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null;
+  }
+
+  function storageSet(key, value) {
+    if (storageAvailable) {
+      try { window.localStorage.setItem(key, value); return; } catch (e) {}
+    }
+    memoryStore[key] = value;
+  }
+
+  // ---- ユーティリティ ----
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  var toastEl = $('toast');
+  var toastTimer = null;
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('show');
+    }, 1800);
+  }
+
+  // ---- 状態 ----
+  function createDefaultState() {
+    var id = uuid();
+    return {
+      tabs: [{ id: id, name: 'マイ絵文字', emojis: [] }],
+      activeTabId: id,
+      query: ''
+    };
+  }
+
+  var state = createDefaultState();
+
+  function loadState() {
+    var raw = storageGet(STORAGE_KEY);
+    if (!raw) return;
+
+    try {
+      var parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.tabs) || parsed.tabs.length === 0) return;
+
+      var tabs = parsed.tabs.map(function (tab) {
+        return {
+          id: tab.id || uuid(),
+          name: (typeof tab.name === 'string' && tab.name.trim()) ? tab.name : '無題',
+          emojis: Array.isArray(tab.emojis)
+            ? tab.emojis.filter(function (e) { return typeof e === 'string' && e; })
+            : []
+        };
+      });
+
+      var activeTabId = parsed.activeTabId;
+      if (!tabs.some(function (t) { return t.id === activeTabId; })) {
+        activeTabId = tabs[0].id;
+      }
+
+      state.tabs = tabs;
+      state.activeTabId = activeTabId;
+    } catch (e) {
+      // 壊れていたらデフォルト
+    }
+  }
+
+  function saveState() {
+    storageSet(STORAGE_KEY, JSON.stringify({
+      tabs: state.tabs,
+      activeTabId: state.activeTabId
+    }));
+  }
+
+  function getActiveTab() {
+    return state.tabs.find(function (t) { return t.id === state.activeTabId; }) || state.tabs[0];
+  }
+
+  // ---- 文字サイズ ----
+  var SIZES = {
+    small:  { size: '20px', tile: '56px' },
+    medium: { size: '28px', tile: '72px' },
+    large:  { size: '40px', tile: '96px' },
+    xlarge: { size: '56px', tile: '128px' }
+  };
+
+  function applySize(name) {
+    var cfg = SIZES[name] || SIZES.medium;
+    document.documentElement.style.setProperty('--emoji-size', cfg.size);
+    document.documentElement.style.setProperty('--tile-min', cfg.tile);
+
+    document.querySelectorAll('.size-controls button').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.size === name);
+    });
+
+    storageSet(SIZE_KEY, name);
+  }
+
+  function loadSize() {
+    var saved = storageGet(SIZE_KEY);
+    if (saved && SIZES[saved]) return saved;
+    return 'medium';
+  }
+
+  // ---- 描画 ----
+  var tabsEl = $('tabs');
+  var emojiGrid = $('emojiGrid');
+  var listTitle = $('listTitle');
+  var countEl = $('count');
+
+  function render() {
+    renderTabs();
+    renderEmojis();
+  }
+
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    state.tabs.forEach(function (tab) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab' + (tab.id === state.activeTabId ? ' active' : '');
+      btn.textContent = tab.name;
+      btn.addEventListener('click', function () {
+        state.activeTabId = tab.id;
+        saveState();
+        render();
+      });
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function renderEmojis() {
+    var query = (state.query || '').trim();
+    var lowerQuery = query.toLowerCase();
+    var activeTab = getActiveTab();
+    var items = [];
+
+    if (query) {
+      state.tabs.forEach(function (tab) {
+        var tabMatches = tab.name.toLowerCase().indexOf(lowerQuery) !== -1;
+        tab.emojis.forEach(function (emoji) {
+          if (tabMatches || emoji.indexOf(query) !== -1) {
+            items.push({ emoji: emoji, tabName: tab.name });
+          }
+        });
+      });
+      listTitle.textContent = '検索結果: ' + query;
+    } else {
+      items = activeTab.emojis.map(function (emoji) {
+        return { emoji: emoji, tabName: activeTab.name };
+      });
+      listTitle.textContent = activeTab.name;
+    }
+
+    countEl.textContent = items.length + ' 個';
+    emojiGrid.innerHTML = '';
+
+    if (items.length === 0) {
+      var empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = query ? '一致する絵文字がありません' : 'まだ絵文字が登録されていません';
+      emojiGrid.appendChild(empty);
+      return;
+    }
+
+    items.forEach(function (item) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'emoji-btn';
+      btn.dataset.emoji = item.emoji;
+      btn.title = 'クリックでコピー';
+
+      var span = document.createElement('span');
+      span.className = 'emoji-char';
+      span.textContent = item.emoji;
+      btn.appendChild(span);
+
+      if (query) {
+        var badge = document.createElement('span');
+        badge.className = 'tab-badge';
+        badge.textContent = item.tabName;
+        btn.appendChild(badge);
+      }
+
+      emojiGrid.appendChild(btn);
+    });
+  }
+
+  // ---- コピー ----
+  function copyEmoji(emoji) {
+    var done = function () { showToast('コピーしました'); };
+    var fail = function () { showToast('コピーできませんでした'); };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(emoji).then(done).catch(function () {
+        fallbackCopy(emoji) ? done() : fail();
+      });
+    } else {
+      fallbackCopy(emoji) ? done() : fail();
+    }
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ---- 絵文字パース ----
+  function parseEmojis(text) {
+    var segments;
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      var seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+      segments = Array.from(seg.segment(text), function (s) { return s.segment; });
+    } else {
+      segments = Array.from(text);
+    }
+
+    var result = [];
+    for (var i = 0; i < segments.length; i++) {
+      if (isEmojiGrapheme(segments[i])) result.push(segments[i]);
+    }
+    return result;
+  }
+
+  function isEmojiGrapheme(segment) {
+    if (!segment || !segment.trim()) return false;
+    if (/^[\x00-\x7F]+$/.test(segment) && !/[\u20E3\uFE0F]/.test(segment)) return false;
+    try {
+      return /[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Regional_Indicator}\u20E3]/u.test(segment);
+    } catch (e) {
+      // 古いブラウザ向けのざっくり判定
+      return /[\u203C-\u3299\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF]/.test(segment);
+    }
+  }
+
+  // ---- 登録 ----
+  var emojiInput = $('emojiInput');
+
+  function registerEmojis() {
+    var text = emojiInput.value;
+    if (!text.trim()) { showToast('絵文字を貼り付けてください'); return; }
+
+    var emojis = parseEmojis(text);
+    if (emojis.length === 0) { showToast('絵文字が見つかりませんでした'); return; }
+
+    var tab = getActiveTab();
+    var existing = {};
+    tab.emojis.forEach(function (e) { existing[e] = true; });
+
+    var added = 0;
+    emojis.forEach(function (emoji) {
+      if (!existing[emoji]) {
+        tab.emojis.push(emoji);
+        existing[emoji] = true;
+        added++;
+      }
+    });
+
+    saveState();
+    render();
+    emojiInput.value = '';
+    showToast(added + ' 個を「' + tab.name + '」に登録しました');
+  }
+
+  // ---- タブ操作（インライン入力） ----
+  var tabForm = $('tabForm');
+  var tabNameInput = $('tabNameInput');
+  var tabFormMode = null; // 'add' or 'rename'
+
+  function openTabForm(mode) {
+    tabFormMode = mode;
+    tabForm.classList.add('open');
+    tabNameInput.value = mode === 'rename' ? getActiveTab().name : '';
+    tabNameInput.focus();
+    tabNameInput.select();
+  }
+
+  function closeTabForm() {
+    tabForm.classList.remove('open');
+    tabFormMode = null;
+    tabNameInput.value = '';
+  }
+
+  function commitTabForm() {
+    var name = tabNameInput.value.trim();
+    if (!name) { showToast('タブ名を入力してください'); return; }
+
+    if (tabFormMode === 'add') {
+      var id = uuid();
+      state.tabs.push({ id: id, name: name, emojis: [] });
+      state.activeTabId = id;
+      saveState();
+      render();
+      showToast('タブを追加しました');
+    } else if (tabFormMode === 'rename') {
+      var tab = getActiveTab();
+      tab.name = name;
+      saveState();
+      render();
+      showToast('タブ名を変更しました');
+    }
+
+    closeTabForm();
+  }
+
+  function deleteTab() {
+    if (state.tabs.length <= 1) {
+      showToast('最後のタブは削除できません');
+      return;
+    }
+    var tab = getActiveTab();
+    if (!window.confirm('「' + tab.name + '」を削除しますか？中の絵文字も削除されます。')) {
+      return;
+    }
+    state.tabs = state.tabs.filter(function (t) { return t.id !== tab.id; });
+    state.activeTabId = state.tabs[0].id;
+    saveState();
+    render();
+    showToast('削除しました');
+  }
+
+  // ---- イベント ----
+  $('registerBtn').addEventListener('click', registerEmojis);
+  $('clearBtn').addEventListener('click', function () {
+    emojiInput.value = '';
+    emojiInput.focus();
+  });
+
+  $('addTabBtn').addEventListener('click', function () { openTabForm('add'); });
+  $('renameTabBtn').addEventListener('click', function () { openTabForm('rename'); });
+  $('deleteTabBtn').addEventListener('click', deleteTab);
+  $('tabFormOk').addEventListener('click', commitTabForm);
+  $('tabFormCancel').addEventListener('click', closeTabForm);
+
+  tabNameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); commitTabForm(); }
+    if (e.key === 'Escape') { closeTabForm(); }
+  });
+
+  $('search').addEventListener('input', function (e) {
+    state.query = e.target.value;
+    renderEmojis();
+  });
+
+  emojiGrid.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-emoji]');
+    if (!btn) return;
+    copyEmoji(btn.dataset.emoji);
+  });
+
+  document.querySelector('.size-controls').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-size]');
+    if (!btn) return;
+    applySize(btn.dataset.size);
+  });
+
+  // ---- 初期化 ----
+  loadState();
+  applySize(loadSize());
+
+  if (!storageAvailable) {
+    $('storageWarning').classList.add('show');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
