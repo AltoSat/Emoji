@@ -2,215 +2,396 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>絵文字登録帳</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>🗂️</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   :root {
-    --emoji-size: 28px;
-    --tile-min: 72px;
+    --bg: #0b0d12;
+    --panel: #141821;
+    --panel2: #1b2130;
+    --border: #262e3f;
+    --text: #e7ebf3;
+    --muted: #8a93a8;
+    --accent: #4f8cff;
+    --fav: #f5a524;
+    --unused: #5b6478;
+    --danger: #ef4444;
+    --topbar-h: auto;
   }
 
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #f6f7f9;
-    color: #1f2937;
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    overscroll-behavior-y: none;
+    min-height: 100%;
   }
 
-  .app {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 16px;
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+
+  /* ---------- Topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(11,13,18,0.94);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
   }
 
-  header {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+  .title-row {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px 4px;
   }
 
-  h1 { font-size: 22px; margin: 0; }
+  .app-title {
+    font-size: 26px; line-height: 1;
+    padding-left: 2px;
+    user-select: none;
+  }
 
-  .search-wrap { flex: 1 1 220px; max-width: 360px; }
+  .spacer { flex: 1 1 auto; }
 
-  input[type="search"],
-  input[type="text"],
-  textarea {
-    width: 100%;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    padding: 10px 12px;
+  .icon-btn {
+    min-width: 38px; height: 38px;
+    padding: 0 8px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
     font-size: 16px;
-    background: #fff;
-    color: inherit;
-  }
-
-  textarea { min-height: 110px; resize: vertical; }
-
-  button {
-    border: 1px solid #d1d5db;
-    background: #fff;
-    color: #1f2937;
-    border-radius: 10px;
-    padding: 9px 12px;
-    font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
     cursor: pointer;
+    font-family: inherit;
+    transition: background .15s, border-color .15s, transform .1s;
   }
-
-  button:hover { background: #f3f4f6; }
-
-  button.primary {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
+  .icon-btn:active { transform: scale(.94); }
+  .icon-btn.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
   }
-  button.primary:hover { background: #1d4ed8; }
+  .icon-btn.wide { font-size: 12.5px; padding: 0 9px; letter-spacing: .3px; }
 
-  button.danger {
-    border-color: #fca5a5;
-    color: #b91c1c;
-  }
-  button.danger:hover { background: #fef2f2; }
-
-  button.active {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-  }
-
-  .panel {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 16px;
-  }
-
+  /* ---------- Tabs ---------- */
   .tabs {
-    display: flex;
-    gap: 8px;
+    display: flex; gap: 7px;
     overflow-x: auto;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
+    padding: 4px 10px 10px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+  .tabs::-webkit-scrollbar { display: none; }
 
   .tab {
-    white-space: nowrap;
-    border-radius: 999px;
-    padding: 8px 14px;
     flex: 0 0 auto;
-  }
-
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .inline-form {
-    display: none;
-    gap: 8px;
-    align-items: center;
-    flex: 1 1 240px;
-  }
-
-  .inline-form.open { display: flex; }
-
-  .inline-form input { flex: 1 1 160px; }
-
-  .list-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .list-header h2 { font-size: 17px; margin: 0; }
-  #count { color: #6b7280; font-size: 13px; }
-
-  .size-controls {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .size-controls .label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-right: 2px;
-  }
-
-  .size-controls button {
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-
-  .emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
-    gap: 8px;
-  }
-
-  .emoji-btn {
-    position: relative;
-    min-height: calc(var(--emoji-size) + 28px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    overflow: hidden;
-  }
-
-  .emoji-char {
-    font-size: var(--emoji-size);
-    line-height: 1;
-  }
-
-  .tab-badge {
-    position: absolute;
-    left: 4px;
-    right: 4px;
-    bottom: 3px;
-    font-size: 9px;
-    color: #6b7280;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 13.5px;
+    cursor: pointer;
+    user-select: none;
     white-space: nowrap;
-    text-align: center;
+    max-width: 46vw;
+    overflow: hidden; text-overflow: ellipsis;
+    font-family: inherit;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab.active {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .tab.drop-target {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,140,255,.35);
+  }
+  .tab.add-folder {
+    border-style: dashed;
+    color: var(--muted);
+    padding: 8px 12px;
   }
 
-  .empty {
+  /* ---------- Mode bar ---------- */
+  .mode-bar {
+    display: none;
+    align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: rgba(79,140,255,.10);
+    border-top: 1px solid rgba(79,140,255,.25);
+    font-size: 12.5px;
+    color: #b9cdfb;
+  }
+  .mode-bar.show { display: flex; }
+  .mode-bar .grow { flex: 1 1 auto; }
+
+  .mini-btn {
+    padding: 6px 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 12.5px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .mini-btn.danger {
+    background: var(--danger); border-color: var(--danger); color: #fff;
+  }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    display: grid;
+    gap: 8px;
+    padding: 12px 10px;
+  }
+  .grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+  .grid[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+  .grid[data-cols="1"] { grid-template-columns: 1fr; }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    touch-action: pan-y;
+    overflow: hidden;
+    user-select: none;
+    font-family: inherit;
+    padding: 0;
+    transition: transform .18s ease, background .15s, border-color .15s, box-shadow .15s;
+    will-change: transform;
+  }
+  .grid[data-cols="1"] .tile { border-radius: 20px; }
+
+  .tile .char { line-height: 1; pointer-events: none; display: block; }
+  .grid[data-cols="3"] .char { font-size: 30px; }
+  .grid[data-cols="2"] .char { font-size: 48px; }
+  .grid[data-cols="1"] .char { font-size: 88px; }
+
+  @media (min-width: 700px) {
+    .grid[data-cols="3"] { grid-template-columns: repeat(5, 1fr); }
+    .grid[data-cols="2"] { grid-template-columns: repeat(4, 1fr); }
+    .grid[data-cols="3"] .char { font-size: 34px; }
+    .grid[data-cols="2"] .char { font-size: 52px; }
+  }
+
+  .tile.fav {
+    border-color: rgba(245,165,36,.5);
+    background: rgba(245,165,36,.08);
+  }
+  .tile.unused {
+    opacity: .35;
+  }
+  .tile.selected {
+    border-color: var(--accent);
+    background: rgba(79,140,255,.20);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .tile.selected::after {
+    content: '✓';
+    position: absolute; top: 3px; left: 6px;
+    font-size: 13px; font-weight: 700; color: var(--accent);
+  }
+
+  .tile .mark {
+    position: absolute; top: 3px; right: 6px;
+    font-size: 11px; color: var(--fav); pointer-events: none;
+  }
+  .tile.unused .mark { color: var(--unused); }
+
+  .tile.swipe-fav {
+    border-color: var(--fav);
+    box-shadow: 0 0 0 2px rgba(245,165,36,.5) inset;
+  }
+  .tile.swipe-unused {
+    border-color: var(--muted);
+    box-shadow: 0 0 0 2px rgba(138,147,168,.45) inset;
+  }
+
+  body.mode-edit .tile { touch-action: none; cursor: grab; }
+  body.mode-edit .tile.add-tile { touch-action: manipulation; }
+  body.mode-delete .tile { cursor: pointer; }
+
+  .tile.dragging { opacity: .25; }
+  .tile.drop-target {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,140,255,.5) inset;
+  }
+
+  .drag-ghost {
+    position: fixed; left: 0; top: 0;
+    z-index: 999; pointer-events: none;
+    opacity: .92;
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.6);
+    border: 1px solid var(--accent);
+    background: var(--panel2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .drag-ghost .char { line-height: 1; }
+
+  /* add tile */
+  .tile.add-tile {
+    border-style: dashed;
+    background: transparent;
+    color: var(--muted);
+  }
+  .tile.add-tile .plus {
+    font-size: 30px; line-height: 1; font-weight: 300;
+  }
+
+  .empty-note {
     grid-column: 1 / -1;
-    color: #6b7280;
-    margin: 8px 0;
-    font-size: 14px;
+    color: var(--muted);
+    font-size: 13.5px;
+    text-align: center;
+    padding: 26px 12px;
   }
 
+  /* ---------- Bottom bar ---------- */
+  .bottom-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 60;
+    display: flex; gap: 8px; align-items: flex-end;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(20,24,33,.95);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border);
+  }
+
+  #inputArea {
+    flex: 1 1 auto;
+    min-height: 42px; max-height: 130px;
+    resize: none;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    line-height: 1.4;
+    outline: none;
+  }
+  #inputArea:focus { border-color: var(--accent); }
+
+  /* ---------- Modal ---------- */
+  .modal-root {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .modal-root.hidden { display: none; }
+
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.62);
+    animation: fadeIn .15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-panel {
+    position: relative;
+    width: 100%; max-width: 560px;
+    max-height: 86vh;
+    overflow-y: auto;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    animation: slideUp .2s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(26px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-title {
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 12px; color: var(--text);
+  }
+  .modal-message {
+    font-size: 14px; color: var(--muted); line-height: 1.6;
+    margin-bottom: 4px;
+  }
+  .modal-textarea {
+    width: 100%; min-height: 130px; resize: vertical;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text);
+    padding: 12px; font-size: 16px; font-family: inherit;
+    outline: none;
+  }
+  .modal-textarea:focus { border-color: var(--accent); }
+  .modal-input {
+    width: 100%;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text);
+    padding: 12px; font-size: 16px; font-family: inherit;
+    outline: none;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 14px;
+  }
+
+  .modal-list { display: flex; flex-direction: column; gap: 2px; }
+  .modal-item {
+    width: 100%;
+    text-align: left;
+    padding: 14px 12px;
+    border: none; border-radius: 12px;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px; font-family: inherit;
+    cursor: pointer;
+  }
+  .modal-item:active { background: rgba(255,255,255,.07); }
+  .modal-item.danger { color: var(--danger); }
+
+  .btn {
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 14px; font-family: inherit;
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .btn.danger {
+    background: var(--danger); border-color: var(--danger); color: #fff;
+  }
+
+  /* ---------- Toast ---------- */
   .toast {
     position: fixed;
-    left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%) translateY(12px);
-    background: #111827;
+    left: 50%; bottom: calc(96px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(10px);
+    background: #232a3a;
     color: #fff;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 14px;
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
     opacity: 0;
     pointer-events: none;
-    transition: 0.2s ease;
-    z-index: 100;
-    max-width: 90vw;
+    transition: opacity .18s, transform .18s;
+    z-index: 400;
+    max-width: 86vw;
     text-align: center;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
   .toast.show {
     opacity: 1;
@@ -219,94 +400,91 @@
 
   .storage-warning {
     display: none;
-    background: #fff7ed;
-    border: 1px solid #fdba74;
-    color: #9a3412;
-    border-radius: 10px;
+    margin: 0 10px 8px;
     padding: 8px 12px;
-    font-size: 13px;
-    margin-bottom: 12px;
+    border-radius: 10px;
+    background: rgba(245,165,36,.12);
+    border: 1px solid rgba(245,165,36,.35);
+    color: #f3c37a;
+    font-size: 12px;
   }
   .storage-warning.show { display: block; }
-
-  @media (max-width: 560px) {
-    .app { padding: 10px; }
-    h1 { font-size: 18px; }
-  }
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>絵文字登録帳</h1>
-    <div class="search-wrap">
-      <input id="search" type="search" placeholder="絵文字・タブ名で検索">
-    </div>
-  </header>
 
-  <div id="storageWarning" class="storage-warning">
-    この環境では保存領域が使えないため、ページを閉じるとデータは消えます。
+<header class="topbar">
+  <div class="title-row">
+    <div class="app-title" title="絵文字帳">🗂️</div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="editBtn" type="button" title="編集モード">✏️</button>
+    <button class="icon-btn" id="delBtn" type="button" title="削除モード">🗑️</button>
+    <button class="icon-btn wide" id="colBtn" type="button" title="列数">3列</button>
+    <button class="icon-btn" id="menuBtn" type="button" title="メニュー">⋯</button>
   </div>
 
-  <section class="panel">
-    <div id="tabs" class="tabs"></div>
-    <div class="row">
-      <button id="addTabBtn" type="button">＋ タブ追加</button>
-      <button id="renameTabBtn" type="button">名前変更</button>
-      <button id="deleteTabBtn" type="button" class="danger">削除</button>
-    </div>
-    <div id="tabForm" class="inline-form" style="margin-top:10px;">
-      <input id="tabNameInput" type="text" placeholder="タブ名を入力" maxlength="40">
-      <button id="tabFormOk" type="button" class="primary">OK</button>
-      <button id="tabFormCancel" type="button">キャンセル</button>
-    </div>
-  </section>
+  <div class="tabs" id="tabs"></div>
 
-  <section class="panel">
-    <textarea id="emojiInput" placeholder="ここに絵文字を大量に貼り付けてください"></textarea>
-    <div class="row" style="margin-top:10px;">
-      <button id="registerBtn" class="primary" type="button">選択中のタブに登録</button>
-      <button id="clearBtn" type="button">入力クリア</button>
-    </div>
-  </section>
+  <div class="storage-warning" id="storageWarning">
+    この環境では保存領域が使えないため、閉じるとデータは消えます。
+  </div>
 
-  <section class="panel">
-    <div class="list-header">
-      <h2 id="listTitle">マイ絵文字</h2>
-      <div class="row" style="gap:10px;">
-        <span id="count"></span>
-        <div class="size-controls">
-          <span class="label">文字サイズ</span>
-          <button type="button" data-size="small">小</button>
-          <button type="button" data-size="medium" class="active">中</button>
-          <button type="button" data-size="large">大</button>
-          <button type="button" data-size="xlarge">特大</button>
-        </div>
-      </div>
-    </div>
-    <div id="emojiGrid" class="emoji-grid"></div>
-  </section>
+  <div class="mode-bar" id="modeBar"></div>
+</header>
+
+<main class="grid" id="grid" data-cols="3"></main>
+
+<div class="bottom-bar">
+  <textarea id="inputArea" rows="1" placeholder="絵文字をタップするとここに入力されます"></textarea>
+  <button class="icon-btn" id="copyInputBtn" type="button" title="コピー">📋</button>
+  <button class="icon-btn" id="clearInputBtn" type="button" title="クリア">✕</button>
 </div>
 
-<div id="toast" class="toast"></div>
+<div class="modal-root hidden" id="modalRoot">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-panel" id="modalPanel"></div>
+</div>
+
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+
+<div class="toast" id="toast"></div>
 
 <script>
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'emoji-registry-v2';
-  var SIZE_KEY = 'emoji-registry-size-v2';
+  /* =========================================================
+     定数・ユーティリティ
+  ========================================================= */
+  var STORAGE_KEY   = 'emoji-registry-v3';
+  var LEGACY_KEYS   = ['emoji-registry-v2', 'emoji-registry-v1'];
+  var COLS_KEY      = 'emoji-registry-cols-v3';
 
-  // ---- 保存（localStorage が使えなければメモリ） ----
+  var STATUS_ORDER = { favorite: 0, normal: 1, unused: 2 };
+
+  function $(id) { return document.getElementById(id); }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* =========================================================
+     ストレージ（使えなければメモリ）
+  ========================================================= */
   var storageAvailable = (function () {
     try {
-      var k = '__test__';
+      var k = '__t__';
       window.localStorage.setItem(k, '1');
       window.localStorage.removeItem(k);
       return true;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   })();
 
   var memoryStore = {};
@@ -325,202 +503,1089 @@
     memoryStore[key] = value;
   }
 
-  // ---- ユーティリティ ----
-  function uuid() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-  }
-
-  function $(id) { return document.getElementById(id); }
-
+  /* =========================================================
+     Toast
+  ========================================================= */
   var toastEl = $('toast');
   var toastTimer = null;
 
-  function showToast(msg) {
+  function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () {
       toastEl.classList.remove('show');
-    }, 1800);
+    }, 1700);
   }
 
-  // ---- 状態 ----
+  /* =========================================================
+     データ正規化（旧形式も取り込む）
+  ========================================================= */
+  function normalizeEmojis(arr) {
+    var out = [];
+    if (!Array.isArray(arr)) return out;
+
+    for (var i = 0; i < arr.length; i++) {
+      var item = arr[i];
+
+      if (typeof item === 'string') {
+        if (item) out.push({ id: uuid(), char: item, status: 'normal' });
+        continue;
+      }
+
+      if (item && typeof item === 'object' && typeof item.char === 'string' && item.char) {
+        var st = (item.status === 'favorite' || item.status === 'unused') ? item.status : 'normal';
+        out.push({
+          id: item.id || uuid(),
+          char: item.char,
+          status: st
+        });
+      }
+    }
+    return out;
+  }
+
+  function normalizeFolders(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+
+    var list = null;
+    if (Array.isArray(raw.folders)) list = raw.folders;
+    else if (Array.isArray(raw.tabs)) list = raw.tabs;   // 旧形式
+    if (!list) return null;
+
+    var folders = [];
+    for (var i = 0; i < list.length; i++) {
+      var f = list[i];
+      if (!f || typeof f !== 'object') continue;
+      folders.push({
+        id: f.id || uuid(),
+        name: (typeof f.name === 'string' && f.name.trim()) ? f.name : '無題',
+        emojis: normalizeEmojis(f.emojis)
+      });
+    }
+    if (!folders.length) return null;
+
+    folders.forEach(sortEmojis);
+    return folders;
+  }
+
+  function sortEmojis(folder) {
+    folder.emojis.sort(function (a, b) {
+      return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    });
+  }
+
+  /* =========================================================
+     状態
+  ========================================================= */
   function createDefaultState() {
     var id = uuid();
     return {
-      tabs: [{ id: id, name: 'マイ絵文字', emojis: [] }],
-      activeTabId: id,
-      query: ''
+      folders: [{ id: id, name: 'マイ絵文字', emojis: [] }],
+      activeFolderId: id
     };
   }
 
   var state = createDefaultState();
+  var mode = 'normal';            // 'normal' | 'edit' | 'delete'
+  var selected = {};              // id -> true
 
   function loadState() {
-    var raw = storageGet(STORAGE_KEY);
+    var raw = null;
+    var keys = [STORAGE_KEY].concat(LEGACY_KEYS);
+
+    for (var i = 0; i < keys.length; i++) {
+      var s = storageGet(keys[i]);
+      if (s) { raw = s; break; }
+    }
     if (!raw) return;
 
     try {
       var parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.tabs) || parsed.tabs.length === 0) return;
+      var folders = normalizeFolders(parsed);
+      if (!folders) return;
 
-      var tabs = parsed.tabs.map(function (tab) {
-        return {
-          id: tab.id || uuid(),
-          name: (typeof tab.name === 'string' && tab.name.trim()) ? tab.name : '無題',
-          emojis: Array.isArray(tab.emojis)
-            ? tab.emojis.filter(function (e) { return typeof e === 'string' && e; })
-            : []
-        };
-      });
-
-      var activeTabId = parsed.activeTabId;
-      if (!tabs.some(function (t) { return t.id === activeTabId; })) {
-        activeTabId = tabs[0].id;
+      var activeId = parsed.activeFolderId;
+      if (!folders.some(function (f) { return f.id === activeId; })) {
+        activeId = folders[0].id;
       }
 
-      state.tabs = tabs;
-      state.activeTabId = activeTabId;
+      state.folders = folders;
+      state.activeFolderId = activeId;
     } catch (e) {
-      // 壊れていたらデフォルト
+      /* 壊れていたら既定値のまま */
     }
   }
 
-  function saveState() {
+  function save() {
     storageSet(STORAGE_KEY, JSON.stringify({
-      tabs: state.tabs,
-      activeTabId: state.activeTabId
+      version: 3,
+      folders: state.folders,
+      activeFolderId: state.activeFolderId
     }));
   }
 
-  function getActiveTab() {
-    return state.tabs.find(function (t) { return t.id === state.activeTabId; }) || state.tabs[0];
+  function getFolder(id) {
+    for (var i = 0; i < state.folders.length; i++) {
+      if (state.folders[i].id === id) return state.folders[i];
+    }
+    return null;
   }
 
-  // ---- 文字サイズ ----
-  var SIZES = {
-    small:  { size: '20px', tile: '56px' },
-    medium: { size: '28px', tile: '72px' },
-    large:  { size: '40px', tile: '96px' },
-    xlarge: { size: '56px', tile: '128px' }
-  };
-
-  function applySize(name) {
-    var cfg = SIZES[name] || SIZES.medium;
-    document.documentElement.style.setProperty('--emoji-size', cfg.size);
-    document.documentElement.style.setProperty('--tile-min', cfg.tile);
-
-    document.querySelectorAll('.size-controls button').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.size === name);
-    });
-
-    storageSet(SIZE_KEY, name);
+  function getActiveFolder() {
+    return getFolder(state.activeFolderId) || state.folders[0];
   }
 
-  function loadSize() {
-    var saved = storageGet(SIZE_KEY);
-    if (saved && SIZES[saved]) return saved;
-    return 'medium';
+  function getEmojiById(id) {
+    for (var i = 0; i < state.folders.length; i++) {
+      var list = state.folders[i].emojis;
+      for (var j = 0; j < list.length; j++) {
+        if (list[j].id === id) return { folder: state.folders[i], emoji: list[j] };
+      }
+    }
+    return null;
   }
 
-  // ---- 描画 ----
-  var tabsEl = $('tabs');
-  var emojiGrid = $('emojiGrid');
-  var listTitle = $('listTitle');
-  var countEl = $('count');
+  /* =========================================================
+     DOM 参照
+  ========================================================= */
+  var tabsEl      = $('tabs');
+  var gridEl      = $('grid');
+  var modeBar     = $('modeBar');
+  var editBtn     = $('editBtn');
+  var delBtn      = $('delBtn');
+  var colBtn      = $('colBtn');
+  var menuBtn     = $('menuBtn');
+  var inputArea   = $('inputArea');
 
+  var modalRoot    = $('modalRoot');
+  var modalBackdrop= $('modalBackdrop');
+  var modalPanel   = $('modalPanel');
+  var fileInput    = $('fileInput');
+
+  /* =========================================================
+     モーダル
+  ========================================================= */
+  function openModal(html, onMount) {
+    modalPanel.innerHTML = html;
+    modalRoot.classList.remove('hidden');
+    if (typeof onMount === 'function') onMount(modalPanel);
+  }
+
+  function closeModal() {
+    modalRoot.classList.add('hidden');
+    modalPanel.innerHTML = '';
+  }
+
+  modalBackdrop.addEventListener('click', closeModal);
+
+  function confirmDialog(message, okLabel, onOk) {
+    openModal(
+      '<div class="modal-title">確認</div>' +
+      '<div class="modal-message">' + escapeHtml(message) + '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
+        '<button class="btn danger" data-act="ok" type="button">' + escapeHtml(okLabel || 'OK') + '</button>' +
+      '</div>',
+      function (root) {
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+        root.querySelector('[data-act="ok"]').addEventListener('click', function () {
+          closeModal();
+          onOk();
+        });
+      }
+    );
+  }
+
+  /* =========================================================
+     列数
+  ========================================================= */
+  var COLS_CYCLE = [3, 2, 1];
+
+  function applyCols(cols) {
+    gridEl.dataset.cols = String(cols);
+    colBtn.textContent = cols + '列';
+    storageSet(COLS_KEY, String(cols));
+  }
+
+  function loadCols() {
+    var v = parseInt(storageGet(COLS_KEY), 10);
+    return (v === 1 || v === 2 || v === 3) ? v : 3;
+  }
+
+  function cycleCols() {
+    var cur = parseInt(gridEl.dataset.cols, 10) || 3;
+    var idx = COLS_CYCLE.indexOf(cur);
+    var next = COLS_CYCLE[(idx + 1) % COLS_CYCLE.length];
+    applyCols(next);
+  }
+
+  /* =========================================================
+     描画
+  ========================================================= */
   function render() {
     renderTabs();
-    renderEmojis();
+    renderGrid();
+    renderModeBar();
+    renderToolbar();
+  }
+
+  function renderToolbar() {
+    editBtn.classList.toggle('active', mode === 'edit');
+    delBtn.classList.toggle('active', mode === 'delete');
   }
 
   function renderTabs() {
     tabsEl.innerHTML = '';
-    state.tabs.forEach(function (tab) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tab' + (tab.id === state.activeTabId ? ' active' : '');
-      btn.textContent = tab.name;
-      btn.addEventListener('click', function () {
-        state.activeTabId = tab.id;
-        saveState();
-        render();
-      });
-      tabsEl.appendChild(btn);
+
+    state.folders.forEach(function (folder) {
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'tab' + (folder.id === state.activeFolderId ? ' active' : '');
+      el.dataset.folder = folder.id;
+      el.textContent = folder.name;
+      attachTabHandlers(el, folder);
+      tabsEl.appendChild(el);
     });
+
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'tab add-folder';
+    addBtn.textContent = '＋';
+    addBtn.addEventListener('click', function () {
+      if (suppressTap) return;
+      openFolderCreate();
+    });
+    tabsEl.appendChild(addBtn);
   }
 
-  function renderEmojis() {
-    var query = (state.query || '').trim();
-    var lowerQuery = query.toLowerCase();
-    var activeTab = getActiveTab();
-    var items = [];
+  function attachTabHandlers(el, folder) {
+    var timer = null;
+    var longPressed = false;
 
-    if (query) {
-      state.tabs.forEach(function (tab) {
-        var tabMatches = tab.name.toLowerCase().indexOf(lowerQuery) !== -1;
-        tab.emojis.forEach(function (emoji) {
-          if (tabMatches || emoji.indexOf(query) !== -1) {
-            items.push({ emoji: emoji, tabName: tab.name });
-          }
-        });
-      });
-      listTitle.textContent = '検索結果: ' + query;
-    } else {
-      items = activeTab.emojis.map(function (emoji) {
-        return { emoji: emoji, tabName: activeTab.name };
-      });
-      listTitle.textContent = activeTab.name;
+    function start() {
+      if (suppressTap) return;
+      longPressed = false;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        longPressed = true;
+        openTabMenu(folder);
+      }, 480);
     }
 
-    countEl.textContent = items.length + ' 個';
-    emojiGrid.innerHTML = '';
+    function cancel() {
+      clearTimeout(timer);
+      timer = null;
+    }
 
-    if (items.length === 0) {
-      var empty = document.createElement('p');
-      empty.className = 'empty';
-      empty.textContent = query ? '一致する絵文字がありません' : 'まだ絵文字が登録されていません';
-      emojiGrid.appendChild(empty);
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', function () {
+      cancel();
+      if (suppressTap) return;
+      if (longPressed) return;
+      if (state.activeFolderId !== folder.id) {
+        state.activeFolderId = folder.id;
+        clearSelection();
+        save();
+        render();
+      }
+    });
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+
+  function renderGrid() {
+    var folder = getActiveFolder();
+    gridEl.innerHTML = '';
+
+    if (folder.emojis.length === 0 && mode === 'delete') {
+      var note = document.createElement('div');
+      note.className = 'empty-note';
+      note.textContent = '絵文字がありません';
+      gridEl.appendChild(note);
       return;
     }
 
-    items.forEach(function (item) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'emoji-btn';
-      btn.dataset.emoji = item.emoji;
-      btn.title = 'クリックでコピー';
+    folder.emojis.forEach(function (item) {
+      gridEl.appendChild(makeTile(item, folder.id));
+    });
 
-      var span = document.createElement('span');
-      span.className = 'emoji-char';
-      span.textContent = item.emoji;
-      btn.appendChild(span);
+    if (mode === 'normal') {
+      var addTile = document.createElement('button');
+      addTile.type = 'button';
+      addTile.className = 'tile add-tile';
+      addTile.innerHTML = '<span class="plus">＋</span>';
+      addTile.addEventListener('click', function () {
+        if (suppressTap) return;
+        openPasteSheet();
+      });
+      gridEl.appendChild(addTile);
+    }
+  }
 
-      if (query) {
-        var badge = document.createElement('span');
-        badge.className = 'tab-badge';
-        badge.textContent = item.tabName;
-        btn.appendChild(badge);
+  function makeTile(item, folderId) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tile';
+    if (item.status === 'favorite') btn.classList.add('fav');
+    if (item.status === 'unused') btn.classList.add('unused');
+    if (selected[item.id]) btn.classList.add('selected');
+
+    btn.dataset.id = item.id;
+    btn.dataset.folder = folderId;
+    btn.dataset.char = item.char;
+
+    var span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = item.char;
+    btn.appendChild(span);
+
+    if (item.status === 'favorite') {
+      var m1 = document.createElement('span');
+      m1.className = 'mark';
+      m1.textContent = '★';
+      btn.appendChild(m1);
+    } else if (item.status === 'unused') {
+      var m2 = document.createElement('span');
+      m2.className = 'mark';
+      m2.textContent = '−';
+      btn.appendChild(m2);
+    }
+
+    return btn;
+  }
+
+  function renderModeBar() {
+    if (mode === 'normal') {
+      modeBar.classList.remove('show');
+      modeBar.innerHTML = '';
+      return;
+    }
+
+    modeBar.classList.add('show');
+
+    if (mode === 'edit') {
+      modeBar.innerHTML =
+        '<span class="grow">ドラッグで並び替え / タブへドロップで移動</span>';
+      return;
+    }
+
+    var count = Object.keys(selected).length;
+    modeBar.innerHTML =
+      '<span class="grow">' + count + ' 個選択中</span>' +
+      '<button class="mini-btn" id="selAllBtn" type="button">全選択</button>' +
+      '<button class="mini-btn danger" id="delSelBtn" type="button">削除</button>';
+
+    var selAll = modeBar.querySelector('#selAllBtn');
+    var delSel = modeBar.querySelector('#delSelBtn');
+
+    selAll.addEventListener('click', function () {
+      var folder = getActiveFolder();
+      if (Object.keys(selected).length === folder.emojis.length) {
+        clearSelection();
+      } else {
+        folder.emojis.forEach(function (e) { selected[e.id] = true; });
       }
+      render();
+    });
 
-      emojiGrid.appendChild(btn);
+    delSel.addEventListener('click', deleteSelected);
+  }
+
+  /* =========================================================
+     モード切り替え
+  ========================================================= */
+  function clearSelection() {
+    selected = {};
+  }
+
+  function setMode(next) {
+    mode = (mode === next) ? 'normal' : next;
+    if (mode !== 'delete') clearSelection();
+    document.body.classList.toggle('mode-edit', mode === 'edit');
+    document.body.classList.toggle('mode-delete', mode === 'delete');
+    render();
+  }
+
+  editBtn.addEventListener('click', function () { setMode('edit'); });
+  delBtn.addEventListener('click', function () { setMode('delete'); });
+  colBtn.addEventListener('click', cycleCols);
+  menuBtn.addEventListener('click', openMainMenu);
+
+  /* =========================================================
+     選択削除
+  ========================================================= */
+  function deleteSelected() {
+    var ids = Object.keys(selected);
+    if (ids.length === 0) { toast('選択されていません'); return; }
+
+    confirmDialog(ids.length + ' 個の絵文字を削除しますか？', '削除', function () {
+      var folder = getActiveFolder();
+      folder.emojis = folder.emojis.filter(function (e) { return !selected[e.id]; });
+      clearSelection();
+      save();
+      render();
+      toast('削除しました');
     });
   }
 
-  // ---- コピー ----
-  function copyEmoji(emoji) {
-    var done = function () { showToast('コピーしました'); };
-    var fail = function () { showToast('コピーできませんでした'); };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(emoji).then(done).catch(function () {
-        fallbackCopy(emoji) ? done() : fail();
-      });
+  /* =========================================================
+     絵文字のパース
+  ========================================================= */
+  function parseEmojis(text) {
+    var segments;
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      var seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+      segments = Array.from(seg.segment(text), function (s) { return s.segment; });
     } else {
-      fallbackCopy(emoji) ? done() : fail();
+      segments = Array.from(text);
+    }
+
+    var out = [];
+    for (var i = 0; i < segments.length; i++) {
+      if (isEmojiGrapheme(segments[i])) out.push(segments[i]);
+    }
+    return out;
+  }
+
+  function isEmojiGrapheme(segment) {
+    if (!segment || !segment.trim()) return false;
+    if (/^[\x00-\x7F]+$/.test(segment) && !/[\u20E3\uFE0F]/.test(segment)) return false;
+    try {
+      return /[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Regional_Indicator}\u20E3]/u.test(segment);
+    } catch (e) {
+      return /[\u203C-\u3299\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF]/.test(segment);
     }
   }
+
+  /* =========================================================
+     ＋ ボタン → 貼り付けシート
+  ========================================================= */
+  function openPasteSheet() {
+    openModal(
+      '<div class="modal-title">「' + escapeHtml(getActiveFolder().name) + '」に絵文字を追加</div>' +
+      '<textarea id="pasteArea" class="modal-textarea" placeholder="ここに絵文字を大量に貼り付けてください"></textarea>' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
+        '<button class="btn primary" data-act="add" type="button">追加</button>' +
+      '</div>',
+      function (root) {
+        var ta = root.querySelector('#pasteArea');
+        setTimeout(function () { ta.focus(); }, 60);
+
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+        root.querySelector('[data-act="add"]').addEventListener('click', function () {
+          var emojis = parseEmojis(ta.value);
+          if (emojis.length === 0) { toast('絵文字が見つかりませんでした'); return; }
+
+          var folder = getActiveFolder();
+          var existing = {};
+          folder.emojis.forEach(function (e) { existing[e.char] = true; });
+
+          var added = 0;
+          emojis.forEach(function (ch) {
+            if (!existing[ch]) {
+              folder.emojis.push({ id: uuid(), char: ch, status: 'normal' });
+              existing[ch] = true;
+              added++;
+            }
+          });
+
+          sortEmojis(folder);
+          save();
+          render();
+          closeModal();
+          toast(added + ' 個追加しました');
+        });
+      }
+    );
+  }
+
+  /* =========================================================
+     フォルダ操作
+  ========================================================= */
+  function openFolderCreate() {
+    openModal(
+      '<div class="modal-title">新しいフォルダ</div>' +
+      '<input id="folderNameInput" class="modal-input" type="text" maxlength="40" placeholder="フォルダ名">' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
+        '<button class="btn primary" data-act="ok" type="button">作成</button>' +
+      '</div>',
+      function (root) {
+        var inp = root.querySelector('#folderNameInput');
+        setTimeout(function () { inp.focus(); }, 60);
+
+        function commit() {
+          var v = inp.value.trim();
+          if (!v) { toast('名前を入力してください'); return; }
+          var id = uuid();
+          state.folders.push({ id: id, name: v, emojis: [] });
+          state.activeFolderId = id;
+          save();
+          render();
+          closeModal();
+          toast('フォルダを作成しました');
+        }
+
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+        root.querySelector('[data-act="ok"]').addEventListener('click', commit);
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        });
+      }
+    );
+  }
+
+  function openTabMenu(folder) {
+    openModal(
+      '<div class="modal-title">' + escapeHtml(folder.name) + '</div>' +
+      '<div class="modal-list">' +
+        '<button class="modal-item" data-act="rename" type="button">✏️ 名前を変更</button>' +
+        '<button class="modal-item" data-act="clear" type="button">🧹 中の絵文字を全削除</button>' +
+        '<button class="modal-item danger" data-act="delete" type="button">🗑️ フォルダを削除</button>' +
+        '<button class="modal-item" data-act="cancel" type="button">キャンセル</button>' +
+      '</div>',
+      function (root) {
+        root.querySelector('[data-act="rename"]').addEventListener('click', function () {
+          closeModal();
+          openFolderRename(folder);
+        });
+        root.querySelector('[data-act="clear"]').addEventListener('click', function () {
+          closeModal();
+          if (folder.emojis.length === 0) { toast('空です'); return; }
+          confirmDialog('「' + folder.name + '」の絵文字をすべて削除しますか？', '削除', function () {
+            folder.emojis = [];
+            save(); render(); toast('削除しました');
+          });
+        });
+        root.querySelector('[data-act="delete"]').addEventListener('click', function () {
+          closeModal();
+          deleteFolder(folder);
+        });
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+      }
+    );
+  }
+
+  function openFolderRename(folder) {
+    openModal(
+      '<div class="modal-title">フォルダ名を変更</div>' +
+      '<input id="renameInput" class="modal-input" type="text" maxlength="40" value="' + escapeHtml(folder.name) + '">' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
+        '<button class="btn primary" data-act="ok" type="button">OK</button>' +
+      '</div>',
+      function (root) {
+        var inp = root.querySelector('#renameInput');
+        setTimeout(function () { inp.focus(); inp.select(); }, 60);
+
+        function commit() {
+          var v = inp.value.trim();
+          if (!v) { toast('名前を入力してください'); return; }
+          folder.name = v;
+          save(); render(); closeModal();
+        }
+
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+        root.querySelector('[data-act="ok"]').addEventListener('click', commit);
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        });
+      }
+    );
+  }
+
+  function deleteFolder(folder) {
+    if (state.folders.length <= 1) {
+      toast('最後のフォルダは削除できません');
+      return;
+    }
+    confirmDialog('「' + folder.name + '」を削除しますか？中の絵文字も消えます。', '削除', function () {
+      state.folders = state.folders.filter(function (f) { return f.id !== folder.id; });
+      if (state.activeFolderId === folder.id) {
+        state.activeFolderId = state.folders[0].id;
+      }
+      clearSelection();
+      save(); render();
+      toast('削除しました');
+    });
+  }
+
+  /* =========================================================
+     メインメニュー（エクスポート / インポート）
+  ========================================================= */
+  function openMainMenu() {
+    openModal(
+      '<div class="modal-title">メニュー</div>' +
+      '<div class="modal-list">' +
+        '<button class="modal-item" data-act="export" type="button">📤 全フォルダをエクスポート</button>' +
+        '<button class="modal-item" data-act="import" type="button">📥 インポート（置き換え）</button>' +
+        '<button class="modal-item" data-act="import-merge" type="button">➕ インポート（追加）</button>' +
+        '<button class="modal-item" data-act="cancel" type="button">キャンセル</button>' +
+      '</div>',
+      function (root) {
+        root.querySelector('[data-act="export"]').addEventListener('click', function () {
+          closeModal();
+          exportAll();
+        });
+        root.querySelector('[data-act="import"]').addEventListener('click', function () {
+          closeModal();
+          pendingImportMode = 'replace';
+          fileInput.click();
+        });
+        root.querySelector('[data-act="import-merge"]').addEventListener('click', function () {
+          closeModal();
+          pendingImportMode = 'merge';
+          fileInput.click();
+        });
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+      }
+    );
+  }
+
+  function exportAll() {
+    var data = {
+      version: 3,
+      app: 'emoji-registry',
+      exportedAt: new Date().toISOString(),
+      folders: state.folders,
+      activeFolderId: state.activeFolderId
+    };
+
+    var json = JSON.stringify(data, null, 2);
+    var filename = 'emoji-backup-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+
+    try {
+      var blob = new Blob([json], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      toast('エクスポートしました');
+    } catch (e) {
+      // フォールバック：クリップボード
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(json).then(function () {
+          toast('JSONをコピーしました');
+        }).catch(function () {
+          toast('エクスポートに失敗しました');
+        });
+      } else {
+        toast('エクスポートに失敗しました');
+      }
+    }
+  }
+
+  var pendingImportMode = 'replace';
+
+  fileInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    fileInput.value = '';
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      var folders;
+      try {
+        var parsed = JSON.parse(String(reader.result));
+        folders = normalizeFolders(parsed);
+      } catch (err) {
+        folders = null;
+      }
+
+      if (!folders) {
+        toast('読み込めないファイルです');
+        return;
+      }
+
+      if (pendingImportMode === 'replace') {
+        confirmDialog(
+          '現在のデータをすべて置き換えます。よろしいですか？\n（' + folders.length + ' フォルダ）',
+          '置き換え',
+          function () {
+            state.folders = folders;
+            state.activeFolderId = folders[0].id;
+            clearSelection();
+            save(); render();
+            toast('インポートしました');
+          }
+        );
+      } else {
+        var added = 0;
+        var existingNames = {};
+        state.folders.forEach(function (f) { existingNames[f.name] = f; });
+
+        folders.forEach(function (f) {
+          if (existingNames[f.name]) {
+            // 同名フォルダには絵文字をマージ
+            var target = existingNames[f.name];
+            var chars = {};
+            target.emojis.forEach(function (e) { chars[e.char] = true; });
+            f.emojis.forEach(function (e) {
+              if (!chars[e.char]) {
+                target.emojis.push({ id: uuid(), char: e.char, status: e.status });
+                chars[e.char] = true;
+                added++;
+              }
+            });
+            sortEmojis(target);
+          } else {
+            var nf = { id: uuid(), name: f.name, emojis: f.emojis };
+            state.folders.push(nf);
+            existingNames[f.name] = nf;
+            added += f.emojis.length;
+          }
+        });
+
+        save(); render();
+        toast(added + ' 個追加しました');
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  /* =========================================================
+     絵文字への操作：タップ / スワイプ / ドラッグ
+  ========================================================= */
+  var suppressTap = false;
+  var swipe = null;
+  var drag = null;
+  var ghost = null;
+  var dropTarget = null;
+
+  gridEl.addEventListener('pointerdown', function (e) {
+    var tile = e.target.closest('.tile');
+    if (!tile) return;
+    if (tile.classList.contains('add-tile')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    var id = tile.dataset.id;
+    var folderId = tile.dataset.folder;
+    var char = tile.dataset.char;
+
+    if (mode === 'delete') {
+      e.preventDefault();
+      if (selected[id]) delete selected[id];
+      else selected[id] = true;
+      render();
+      return;
+    }
+
+    if (mode === 'edit') {
+      e.preventDefault();
+      startDrag(e, tile, id, folderId);
+      return;
+    }
+
+    startSwipe(e, tile, id, folderId, char);
+  });
+
+  /* ---------- スワイプ ---------- */
+  function startSwipe(e, tile, id, folderId, char) {
+    swipe = {
+      id: id,
+      folderId: folderId,
+      char: char,
+      tile: tile,
+      x0: e.clientX,
+      y0: e.clientY,
+      dx: 0,
+      active: false,
+      pid: e.pointerId
+    };
+    window.addEventListener('pointermove', onSwipeMove, { passive: false });
+    window.addEventListener('pointerup', onSwipeEnd);
+    window.addEventListener('pointercancel', onSwipeEnd);
+  }
+
+  function onSwipeMove(e) {
+    if (!swipe || e.pointerId !== swipe.pid) return;
+
+    var dx = e.clientX - swipe.x0;
+    var dy = e.clientY - swipe.y0;
+
+    if (!swipe.active) {
+      if (Math.abs(dx) < 12) return;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      swipe.active = true;
+      swipe.tile.style.transition = 'none';
+      swipe.tile.style.zIndex = '5';
+    }
+
+    swipe.dx = dx;
+    var capped = Math.max(-130, Math.min(130, dx));
+    swipe.tile.style.transform = 'translateX(' + capped + 'px)';
+    swipe.tile.classList.toggle('swipe-fav', dx < -50);
+    swipe.tile.classList.toggle('swipe-unused', dx > 50);
+  }
+
+  function onSwipeEnd(e) {
+    window.removeEventListener('pointermove', onSwipeMove);
+    window.removeEventListener('pointerup', onSwipeEnd);
+    window.removeEventListener('pointercancel', onSwipeEnd);
+
+    if (!swipe) return;
+    var s = swipe;
+    swipe = null;
+
+    s.tile.style.transition = '';
+    s.tile.style.transform = '';
+    s.tile.style.zIndex = '';
+    s.tile.classList.remove('swipe-fav', 'swipe-unused');
+
+    if (!s.active) {
+      insertEmojiToInput(s.char);
+      return;
+    }
+
+    if (s.dx < -55) setStatus(s.id, 'favorite');
+    else if (s.dx > 55) setStatus(s.id, 'unused');
+  }
+
+  function setStatus(id, status) {
+    var found = getEmojiById(id);
+    if (!found) return;
+    var emoji = found.emoji;
+
+    var next = (emoji.status === status) ? 'normal' : status;
+    emoji.status = next;
+    sortEmojis(found.folder);
+    save();
+    render();
+
+    if (next === 'favorite') toast('★ お気に入り');
+    else if (next === 'unused') toast('− 使わない');
+    else toast('通常に戻しました');
+  }
+
+  /* ---------- ドラッグ ---------- */
+  function startDrag(e, tile, id, folderId) {
+    drag = {
+      id: id,
+      folderId: folderId,
+      tile: tile,
+      x0: e.clientX,
+      y0: e.clientY,
+      active: false,
+      pid: e.pointerId
+    };
+    window.addEventListener('pointermove', onDragMove, { passive: false });
+    window.addEventListener('pointerup', onDragEnd);
+    window.addEventListener('pointercancel', onDragEnd);
+  }
+
+  function onDragMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+
+    var dx = e.clientX - drag.x0;
+    var dy = e.clientY - drag.y0;
+
+    if (!drag.active) {
+      if (Math.sqrt(dx * dx + dy * dy) < 9) return;
+      drag.active = true;
+      suppressTap = true;
+
+      var rect = drag.tile.getBoundingClientRect();
+      drag.w = rect.width;
+      drag.h = rect.height;
+
+      ghost = drag.tile.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.classList.remove('dragging', 'drop-target');
+      ghost.style.width = rect.width + 'px';
+      ghost.style.height = rect.height + 'px';
+
+      var size = rect.width;
+      if (size > 100) ghost.style.fontSize = '72px';
+      else if (size > 70) ghost.style.fontSize = '42px';
+      else ghost.style.fontSize = '28px';
+
+      var gc = ghost.querySelector('.char');
+      if (gc) gc.style.fontSize = 'inherit';
+
+      document.body.appendChild(ghost);
+      drag.tile.classList.add('dragging');
+      document.body.classList.add('is-dragging');
+    }
+
+    e.preventDefault();
+
+    ghost.style.transform =
+      'translate(' + (e.clientX - drag.w / 2) + 'px, ' + (e.clientY - drag.h / 2) + 'px)';
+
+    updateDropTarget(e.clientX, e.clientY);
+  }
+
+  function updateDropTarget(x, y) {
+    var prevTab = tabsEl.querySelector('.tab.drop-target');
+    if (prevTab) prevTab.classList.remove('drop-target');
+    var prevTile = gridEl.querySelector('.tile.drop-target');
+    if (prevTile) prevTile.classList.remove('drop-target');
+
+    dropTarget = null;
+
+    var el = document.elementFromPoint(x, y);
+    if (!el) return;
+
+    var tab = el.closest ? el.closest('.tab') : null;
+    if (tab && tab.dataset.folder) {
+      tab.classList.add('drop-target');
+      dropTarget = { type: 'folder', folderId: tab.dataset.folder };
+      return;
+    }
+
+    var tile = el.closest ? el.closest('.tile') : null;
+    if (tile && tile !== drag.tile && !tile.classList.contains('add-tile')) {
+      tile.classList.add('drop-target');
+      var r = tile.getBoundingClientRect();
+      var before = x < r.left + r.width / 2;
+      dropTarget = { type: 'tile', id: tile.dataset.id, before: before };
+    }
+  }
+
+  function onDragEnd() {
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+    window.removeEventListener('pointercancel', onDragEnd);
+
+    if (!drag) return;
+    var d = drag;
+    drag = null;
+
+    if (ghost) {
+      if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+    }
+    d.tile.classList.remove('dragging');
+    document.body.classList.remove('is-dragging');
+
+    Array.prototype.forEach.call(tabsEl.querySelectorAll('.tab.drop-target'), function (t) {
+      t.classList.remove('drop-target');
+    });
+    Array.prototype.forEach.call(gridEl.querySelectorAll('.tile.drop-target'), function (t) {
+      t.classList.remove('drop-target');
+    });
+
+    if (!d.active) {
+      suppressTap = false;
+      return;
+    }
+
+    if (dropTarget) {
+      if (dropTarget.type === 'folder') {
+        moveToFolder(d.id, d.folderId, dropTarget.folderId);
+      } else {
+        reorderEmoji(d.id, d.folderId, dropTarget.id, dropTarget.before);
+      }
+    }
+
+    dropTarget = null;
+
+    setTimeout(function () { suppressTap = false; }, 0);
+  }
+
+  function moveToFolder(id, fromId, toId) {
+    if (fromId === toId) return;
+    var from = getFolder(fromId);
+    var to = getFolder(toId);
+    if (!from || !to) return;
+
+    var idx = -1;
+    for (var i = 0; i < from.emojis.length; i++) {
+      if (from.emojis[i].id === id) { idx = i; break; }
+    }
+    if (idx === -1) return;
+
+    var item = from.emojis.splice(idx, 1)[0];
+    to.emojis.push(item);
+    sortEmojis(to);
+
+    save();
+    render();
+    toast('「' + to.name + '」に移動しました');
+  }
+
+  function reorderEmoji(id, folderId, targetId, before) {
+    var folder = getFolder(folderId);
+    if (!folder) return;
+
+    var from = -1;
+    for (var i = 0; i < folder.emojis.length; i++) {
+      if (folder.emojis[i].id === id) { from = i; break; }
+    }
+    if (from === -1) return;
+
+    var item = folder.emojis.splice(from, 1)[0];
+
+    var to = -1;
+    for (var j = 0; j < folder.emojis.length; j++) {
+      if (folder.emojis[j].id === targetId) { to = j; break; }
+    }
+    if (to === -1) to = folder.emojis.length;
+    else if (!before) to += 1;
+
+    folder.emojis.splice(to, 0, item);
+    sortEmojis(folder);
+
+    save();
+    render();
+  }
+
+  /* =========================================================
+     下部入力欄
+  ========================================================= */
+  function autoGrow() {
+    inputArea.style.height = 'auto';
+    inputArea.style.height = Math.min(inputArea.scrollHeight, 130) + 'px';
+  }
+
+  function insertEmojiToInput(ch) {
+    var start = inputArea.selectionStart;
+    var end = inputArea.selectionEnd;
+
+    if (typeof start !== 'number' || start === null) {
+      start = inputArea.value.length;
+      end = start;
+    }
+
+    inputArea.value = inputArea.value.slice(0, start) + ch + inputArea.value.slice(end);
+    var pos = start + ch.length;
+
+    try { inputArea.setSelectionRange(pos, pos); } catch (e) {}
+
+    autoGrow();
+    inputArea.classList.add('flash');
+    setTimeout(function () { inputArea.classList.remove('flash'); }, 150);
+  }
+
+  inputArea.addEventListener('input', autoGrow);
+
+  $('clearInputBtn').addEventListener('click', function () {
+    inputArea.value = '';
+    autoGrow();
+    inputArea.focus();
+  });
+
+  $('copyInputBtn').addEventListener('click', function () {
+    var text = inputArea.value;
+    if (!text) { toast('空です'); return; }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast('コピーしました');
+      }).catch(function () {
+        fallbackCopy(text) ? toast('コピーしました') : toast('コピーできませんでした');
+      });
+    } else {
+      fallbackCopy(text) ? toast('コピーしました') : toast('コピーできませんでした');
+    }
+  });
 
   function fallbackCopy(text) {
     try {
@@ -539,164 +1604,19 @@
     }
   }
 
-  // ---- 絵文字パース ----
-  function parseEmojis(text) {
-    var segments;
-    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-      var seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-      segments = Array.from(seg.segment(text), function (s) { return s.segment; });
-    } else {
-      segments = Array.from(text);
-    }
-
-    var result = [];
-    for (var i = 0; i < segments.length; i++) {
-      if (isEmojiGrapheme(segments[i])) result.push(segments[i]);
-    }
-    return result;
-  }
-
-  function isEmojiGrapheme(segment) {
-    if (!segment || !segment.trim()) return false;
-    if (/^[\x00-\x7F]+$/.test(segment) && !/[\u20E3\uFE0F]/.test(segment)) return false;
-    try {
-      return /[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Regional_Indicator}\u20E3]/u.test(segment);
-    } catch (e) {
-      // 古いブラウザ向けのざっくり判定
-      return /[\u203C-\u3299\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF]/.test(segment);
-    }
-  }
-
-  // ---- 登録 ----
-  var emojiInput = $('emojiInput');
-
-  function registerEmojis() {
-    var text = emojiInput.value;
-    if (!text.trim()) { showToast('絵文字を貼り付けてください'); return; }
-
-    var emojis = parseEmojis(text);
-    if (emojis.length === 0) { showToast('絵文字が見つかりませんでした'); return; }
-
-    var tab = getActiveTab();
-    var existing = {};
-    tab.emojis.forEach(function (e) { existing[e] = true; });
-
-    var added = 0;
-    emojis.forEach(function (emoji) {
-      if (!existing[emoji]) {
-        tab.emojis.push(emoji);
-        existing[emoji] = true;
-        added++;
-      }
-    });
-
-    saveState();
-    render();
-    emojiInput.value = '';
-    showToast(added + ' 個を「' + tab.name + '」に登録しました');
-  }
-
-  // ---- タブ操作（インライン入力） ----
-  var tabForm = $('tabForm');
-  var tabNameInput = $('tabNameInput');
-  var tabFormMode = null; // 'add' or 'rename'
-
-  function openTabForm(mode) {
-    tabFormMode = mode;
-    tabForm.classList.add('open');
-    tabNameInput.value = mode === 'rename' ? getActiveTab().name : '';
-    tabNameInput.focus();
-    tabNameInput.select();
-  }
-
-  function closeTabForm() {
-    tabForm.classList.remove('open');
-    tabFormMode = null;
-    tabNameInput.value = '';
-  }
-
-  function commitTabForm() {
-    var name = tabNameInput.value.trim();
-    if (!name) { showToast('タブ名を入力してください'); return; }
-
-    if (tabFormMode === 'add') {
-      var id = uuid();
-      state.tabs.push({ id: id, name: name, emojis: [] });
-      state.activeTabId = id;
-      saveState();
-      render();
-      showToast('タブを追加しました');
-    } else if (tabFormMode === 'rename') {
-      var tab = getActiveTab();
-      tab.name = name;
-      saveState();
-      render();
-      showToast('タブ名を変更しました');
-    }
-
-    closeTabForm();
-  }
-
-  function deleteTab() {
-    if (state.tabs.length <= 1) {
-      showToast('最後のタブは削除できません');
-      return;
-    }
-    var tab = getActiveTab();
-    if (!window.confirm('「' + tab.name + '」を削除しますか？中の絵文字も削除されます。')) {
-      return;
-    }
-    state.tabs = state.tabs.filter(function (t) { return t.id !== tab.id; });
-    state.activeTabId = state.tabs[0].id;
-    saveState();
-    render();
-    showToast('削除しました');
-  }
-
-  // ---- イベント ----
-  $('registerBtn').addEventListener('click', registerEmojis);
-  $('clearBtn').addEventListener('click', function () {
-    emojiInput.value = '';
-    emojiInput.focus();
-  });
-
-  $('addTabBtn').addEventListener('click', function () { openTabForm('add'); });
-  $('renameTabBtn').addEventListener('click', function () { openTabForm('rename'); });
-  $('deleteTabBtn').addEventListener('click', deleteTab);
-  $('tabFormOk').addEventListener('click', commitTabForm);
-  $('tabFormCancel').addEventListener('click', closeTabForm);
-
-  tabNameInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); commitTabForm(); }
-    if (e.key === 'Escape') { closeTabForm(); }
-  });
-
-  $('search').addEventListener('input', function (e) {
-    state.query = e.target.value;
-    renderEmojis();
-  });
-
-  emojiGrid.addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-emoji]');
-    if (!btn) return;
-    copyEmoji(btn.dataset.emoji);
-  });
-
-  document.querySelector('.size-controls').addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-size]');
-    if (!btn) return;
-    applySize(btn.dataset.size);
-  });
-
-  // ---- 初期化 ----
+  /* =========================================================
+     初期化
+  ========================================================= */
   loadState();
-  applySize(loadSize());
+  applyCols(loadCols());
 
   if (!storageAvailable) {
     $('storageWarning').classList.add('show');
   }
 
   render();
+  autoGrow();
+  save();  // 旧形式から移行した場合は新形式で保存
 })();
 </script>
 </body>
