@@ -10,7 +10,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* ====== 全要素でテキスト選択・コールアウトを禁止 ====== */
   html, body {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -19,7 +18,6 @@
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
   }
-  /* 入力欄だけ許可 */
   input, textarea {
     -webkit-user-select: text;
     -moz-user-select: text;
@@ -110,7 +108,6 @@
   .icon-btn:active { transform: scale(.93); }
   .icon-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-  /* 列数コントロール */
   .col-control {
     display: inline-flex;
     align-items: center;
@@ -223,10 +220,13 @@
     padding: 12px 10px;
     position: relative;
   }
-  .grid[data-cols="5"] { grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 10px 6px; }
-  .grid[data-cols="4"] { grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 8px; }
-  .grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+  .grid[data-cols="1"] { grid-template-columns: 1fr; }
   .grid[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+  .grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+  .grid[data-cols="4"] { grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 8px; }
+  .grid[data-cols="5"] { grid-template-columns: repeat(5, 1fr); gap: 5px; padding: 10px 6px; }
+  .grid[data-cols="6"] { grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 8px 5px; }
+  .grid[data-cols="7"] { grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 8px 4px; }
 
   .tile {
     position: relative;
@@ -246,8 +246,11 @@
     font-family: inherit;
     transition: background .15s, border-color .15s, box-shadow .15s;
   }
+  .grid[data-cols="1"] .tile { border-radius: 20px; }
   .grid[data-cols="2"] .tile { border-radius: 18px; }
   .grid[data-cols="5"] .tile { border-radius: 10px; }
+  .grid[data-cols="6"] .tile { border-radius: 8px; padding: 1px; }
+  .grid[data-cols="7"] .tile { border-radius: 7px; padding: 1px; }
 
   .tile .char {
     display: block;
@@ -280,8 +283,10 @@
   }
   body.show-names .tile.has-name .name { display: block; }
 
-  .grid[data-cols="5"] .tile .name,
-  .grid[data-cols="4"] .tile .name { font-size: 9px; padding: 1px 4px; left: 3px; right: 3px; bottom: 3px; }
+  .grid[data-cols="4"] .tile .name,
+  .grid[data-cols="5"] .tile .name { font-size: 9px; padding: 1px 4px; left: 3px; right: 3px; bottom: 3px; }
+  .grid[data-cols="6"] .tile .name,
+  .grid[data-cols="7"] .tile .name { font-size: 8px; padding: 0 3px; left: 2px; right: 2px; bottom: 2px; border-radius: 4px; }
 
   .tile.fav {
     border-color: rgba(245,165,36,.5);
@@ -304,6 +309,8 @@
     pointer-events: none;
     z-index: 4;
   }
+  .grid[data-cols="6"] .tile.selected::after,
+  .grid[data-cols="7"] .tile.selected::after { font-size: 10px; top: 1px; left: 3px; }
 
   .tile .mark {
     position: absolute;
@@ -314,6 +321,8 @@
     pointer-events: none;
     z-index: 4;
   }
+  .grid[data-cols="6"] .tile .mark,
+  .grid[data-cols="7"] .tile .mark { font-size: 9px; top: 1px; right: 3px; }
   .tile.unused .mark { color: var(--unused); }
 
   /* スワイプ中の表示 */
@@ -381,8 +390,10 @@
     line-height: 1;
     font-weight: 300;
   }
-  .grid[data-cols="5"] .tile.add-tile .plus,
-  .grid[data-cols="4"] .tile.add-tile .plus { font-size: 26px; }
+  .grid[data-cols="4"] .tile.add-tile .plus,
+  .grid[data-cols="5"] .tile.add-tile .plus { font-size: 26px; }
+  .grid[data-cols="6"] .tile.add-tile .plus,
+  .grid[data-cols="7"] .tile.add-tile .plus { font-size: 20px; }
 
   .empty-note {
     grid-column: 1 / -1;
@@ -654,18 +665,15 @@
 (function () {
   'use strict';
 
-  /* =====================================================
-     定数
-  ===================================================== */
-  var STORAGE_KEY   = 'emoji-registry-v7';
-  var LEGACY_KEYS   = ['emoji-registry-v6', 'emoji-registry-v5', 'emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
-  var COLS_KEY      = 'emoji-registry-cols-v7';
-  var NAMES_KEY     = 'emoji-registry-names-v7';
+  var STORAGE_KEY   = 'emoji-registry-v8';
+  var LEGACY_KEYS   = ['emoji-registry-v7', 'emoji-registry-v6', 'emoji-registry-v5', 'emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
+  var COLS_KEY      = 'emoji-registry-cols-v8';
+  var NAMES_KEY     = 'emoji-registry-names-v8';
 
   var STATUS_ORDER = { favorite: 0, normal: 1, unused: 2 };
 
-  var COLS_MIN = 2;
-  var COLS_MAX = 5;
+  var COLS_MIN = 1;
+  var COLS_MAX = 7;
   var COLS_DEFAULT = 3;
 
   function $(id) { return document.getElementById(id); }
@@ -681,9 +689,6 @@
     });
   }
 
-  /* =====================================================
-     ストレージ
-  ===================================================== */
   var storageAvailable = (function () {
     try {
       var k = '__t__';
@@ -709,9 +714,6 @@
     memoryStore[key] = value;
   }
 
-  /* =====================================================
-     Toast
-  ===================================================== */
   var toastEl = $('toast');
   var toastTimer = null;
 
@@ -1078,7 +1080,7 @@
 
   function save() {
     storageSet(STORAGE_KEY, JSON.stringify({
-      version: 7,
+      version: 8,
       folders: state.folders,
       activeFolderId: state.activeFolderId
     }));
@@ -1105,9 +1107,6 @@
     return null;
   }
 
-  /* =====================================================
-     DOM
-  ===================================================== */
   var tabsEl    = $('tabs');
   var gridEl    = $('grid');
   var modeBar   = $('modeBar');
@@ -1160,7 +1159,7 @@
   }
 
   /* =====================================================
-     列数
+     列数（1〜7）
   ===================================================== */
   function applyCols(cols) {
     cols = Math.max(COLS_MIN, Math.min(COLS_MAX, cols));
@@ -1274,7 +1273,6 @@
 
     function start(e) {
       if (suppressTap) return;
-      // 文字選択・コールアウトを完全に防止
       if (e.cancelable) e.preventDefault();
       longPressed = false;
       clearTimeout(timer);
@@ -1305,7 +1303,6 @@
     el.addEventListener('pointerleave', cancel);
     el.addEventListener('pointercancel', cancel);
     el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    // iOS Safari の長押し選択を二重にブロック
     el.addEventListener('touchstart', function (e) {
       if (e.cancelable) e.preventDefault();
     }, { passive: false });
@@ -1429,9 +1426,6 @@
     modeBar.querySelector('#delSelBtn').addEventListener('click', deleteSelected);
   }
 
-  /* =====================================================
-     モード
-  ===================================================== */
   function clearSelection() { selected = {}; }
 
   function setMode(next) {
@@ -1754,7 +1748,7 @@
 
   function exportAll() {
     var data = {
-      version: 7,
+      version: 8,
       app: 'emoji-registry',
       exportedAt: new Date().toISOString(),
       folders: state.folders,
@@ -1892,7 +1886,6 @@
     var char = tile.dataset.char;
 
     if (mode === 'select') {
-      e.preventDefault();
       startSelectDrag(e, tile);
       return;
     }
@@ -1906,7 +1899,7 @@
     startGesture(e, tile, id, folderId, char);
   });
 
-  /* ---- 選択モード：なぞって複数選択 ---- */
+  /* ---- 選択モード：指を離した位置で選択、なぞって複数選択 ---- */
   function startSelectDrag(e, tile) {
     var id = tile.dataset.id;
 
@@ -1919,12 +1912,9 @@
       active: false,
       action: action,
       lastId: null,
-      pid: e.pointerId
+      pid: e.pointerId,
+      startTileId: id
     };
-
-    // 最初のタイルに即座に適用（タップだけでもトグルになる）
-    applySelectAction(tile, action);
-    selectDrag.lastId = id;
 
     window.addEventListener('pointermove', onSelectMove, { passive: false });
     window.addEventListener('pointerup', onSelectEnd);
@@ -1932,6 +1922,7 @@
   }
 
   function applySelectAction(tile, action) {
+    if (!tile) return;
     var id = tile.dataset.id;
     if (action === 'add') {
       selected[id] = true;
@@ -1943,37 +1934,63 @@
     updateSelectCount();
   }
 
+  function getTileAt(x, y) {
+    var el = document.elementFromPoint(x, y);
+    if (!el || !el.closest) return null;
+    var tile = el.closest('.tile');
+    if (!tile) return null;
+    if (tile.classList.contains('add-tile')) return null;
+    return tile;
+  }
+
   function onSelectMove(e) {
     if (!selectDrag || e.pointerId !== selectDrag.pid) return;
 
     var dx = e.clientX - selectDrag.x0;
     var dy = e.clientY - selectDrag.y0;
 
+    // 横方向のドラッグのみを選択スワイプと判定
     if (!selectDrag.active) {
-      // 横方向の動きだけを選択ドラッグと判定
       if (Math.abs(dx) < 10) return;
       if (Math.abs(dx) < Math.abs(dy)) return;
       selectDrag.active = true;
+
+      // 最初のタイルに適用し、起点とする
+      var startTile = gridEl.querySelector('.tile[data-id="' + selectDrag.startTileId + '"]');
+      applySelectAction(startTile, selectDrag.action);
+      selectDrag.lastId = selectDrag.startTileId;
     }
 
     if (e.cancelable) e.preventDefault();
 
-    var el = document.elementFromPoint(e.clientX, e.clientY);
-    if (!el || !el.closest) return;
-    var tile = el.closest('.tile');
-    if (!tile || tile.classList.contains('add-tile')) return;
-
+    var tile = getTileAt(e.clientX, e.clientY);
+    if (!tile) return;
     var id = tile.dataset.id;
     if (id === selectDrag.lastId) return;
     selectDrag.lastId = id;
     applySelectAction(tile, selectDrag.action);
   }
 
-  function onSelectEnd() {
+  function onSelectEnd(e) {
     window.removeEventListener('pointermove', onSelectMove);
     window.removeEventListener('pointerup', onSelectEnd);
     window.removeEventListener('pointercancel', onSelectCancel);
+
+    if (!selectDrag) return;
+    var sd = selectDrag;
     selectDrag = null;
+
+    // スワイプしていない場合は、指を離した位置のタイルを選択
+    if (!sd.active) {
+      var tile = null;
+      if (e && typeof e.clientX === 'number') {
+        tile = getTileAt(e.clientX, e.clientY);
+      }
+      if (!tile) {
+        tile = gridEl.querySelector('.tile[data-id="' + sd.startTileId + '"]');
+      }
+      applySelectAction(tile, sd.action);
+    }
   }
 
   function onSelectCancel() {
@@ -2030,8 +2047,6 @@
     var capped = Math.max(-140, Math.min(140, dx));
     gesture.tile.style.transform = 'translateX(' + capped + 'px)';
 
-    // 左スワイプ（お気に入り方向）: 色はそのまま
-    // 右スワイプ（使わない方向）: グレースケール
     gesture.tile.classList.toggle('swipe-fav', dx < -50);
     gesture.tile.classList.toggle('swipe-unused', dx > 50);
   }
@@ -2456,16 +2471,13 @@
     e.preventDefault();
     inputArea.value = '';
     autoGrow();
-    // フォーカスは移さない（入力モードに入らない）
     if (navigator.vibrate) { try { navigator.vibrate(8); } catch (err) {} }
   });
 
-  // × ボタンをタップした際に inputArea にフォーカスが移らないよう、pointerdown をブロック
   $('clearInputBtn').addEventListener('pointerdown', function (e) {
     e.preventDefault();
   });
 
-  // コピーボタンも同様にフォーカスを移さない
   $('copyInputBtn').addEventListener('pointerdown', function (e) {
     e.preventDefault();
   });
@@ -2488,20 +2500,18 @@
   }
 
   /* =====================================================
-     ズーム・文字選択防止（最強設定）
+     ズーム・文字選択防止
   ===================================================== */
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
   document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
   document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
-  // 全要素で選択開始を禁止（input / textarea のみ許可）
   document.addEventListener('selectstart', function (e) {
     var t = e.target;
     if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
     e.preventDefault();
   }, { passive: false });
 
-  // 念のため dblclick による選択も防止
   document.addEventListener('dblclick', function (e) {
     var t = e.target;
     if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
