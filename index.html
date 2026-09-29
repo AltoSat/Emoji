@@ -2,10 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>🗂️</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>絵文字ノート</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
 
   :root {
     --bg: #0b0d12;
@@ -18,68 +21,95 @@
     --fav: #f5a524;
     --unused: #5b6478;
     --danger: #ef4444;
-    --topbar-h: auto;
   }
 
   html, body {
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
     overscroll-behavior-y: none;
     min-height: 100%;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
-  body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
 
-  /* ---------- Topbar ---------- */
+  /* ---- Topbar ---- */
   .topbar {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(11,13,18,0.94);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(11,13,18,.95);
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
   }
 
   .title-row {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 10px 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 8px 4px;
   }
 
   .app-title {
-    font-size: 26px; line-height: 1;
-    padding-left: 2px;
-    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1 1 auto;
   }
+  .app-title .logo { font-size: 22px; line-height: 1; }
+  .app-title .txt { font-size: 15px; }
 
-  .spacer { flex: 1 1 auto; }
+  .spacer { flex: 0 0 auto; }
 
   .icon-btn {
-    min-width: 38px; height: 38px;
-    padding: 0 8px;
-    border-radius: 11px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 7px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--panel);
     color: var(--text);
-    font-size: 16px;
-    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     font-family: inherit;
-    transition: background .15s, border-color .15s, transform .1s;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    flex: 0 0 auto;
+    transition: background .15s, border-color .15s, transform .08s;
   }
-  .icon-btn:active { transform: scale(.94); }
-  .icon-btn.active {
-    background: var(--accent); border-color: var(--accent); color: #fff;
-  }
-  .icon-btn.wide { font-size: 12.5px; padding: 0 9px; letter-spacing: .3px; }
+  .icon-btn:active { transform: scale(.93); }
+  .icon-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .icon-btn.wide { font-size: 12px; padding: 0 8px; letter-spacing: .3px; }
 
-  /* ---------- Tabs ---------- */
+  /* ---- Tabs ---- */
   .tabs {
-    display: flex; gap: 7px;
+    display: flex;
+    gap: 7px;
     overflow-x: auto;
     padding: 4px 10px 10px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
   }
   .tabs::-webkit-scrollbar { display: none; }
 
@@ -92,30 +122,24 @@
     color: var(--muted);
     font-size: 13.5px;
     cursor: pointer;
-    user-select: none;
     white-space: nowrap;
     max-width: 46vw;
-    overflow: hidden; text-overflow: ellipsis;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     transition: background .15s, color .15s, border-color .15s;
   }
-  .tab.active {
-    background: var(--accent); border-color: var(--accent); color: #fff;
-  }
-  .tab.drop-target {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(79,140,255,.35);
-  }
-  .tab.add-folder {
-    border-style: dashed;
-    color: var(--muted);
-    padding: 8px 12px;
-  }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab.add-folder { border-style: dashed; color: var(--muted); padding: 8px 12px; }
 
-  /* ---------- Mode bar ---------- */
+  /* ---- Mode bar ---- */
   .mode-bar {
     display: none;
-    align-items: center; gap: 8px;
+    align-items: center;
+    gap: 8px;
     padding: 8px 12px;
     background: rgba(79,140,255,.10);
     border-top: 1px solid rgba(79,140,255,.25);
@@ -124,9 +148,8 @@
   }
   .mode-bar.show { display: flex; }
   .mode-bar .grow { flex: 1 1 auto; }
-
-  .mini-btn {
-    padding: 6px 10px;
+  .mode-bar .mini-btn {
+    padding: 6px 11px;
     border-radius: 9px;
     border: 1px solid var(--border);
     background: var(--panel);
@@ -135,15 +158,18 @@
     font-family: inherit;
     cursor: pointer;
   }
-  .mini-btn.danger {
-    background: var(--danger); border-color: var(--danger); color: #fff;
+  .mode-bar .mini-btn.danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
   }
 
-  /* ---------- Grid ---------- */
+  /* ---- Grid ---- */
   .grid {
     display: grid;
     gap: 8px;
     padding: 12px 10px;
+    position: relative;
   }
   .grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
   .grid[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
@@ -152,7 +178,11 @@
   .tile {
     position: relative;
     aspect-ratio: 1 / 1;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
     border-radius: 14px;
     border: 1px solid var(--border);
     background: var(--panel);
@@ -161,32 +191,47 @@
     touch-action: pan-y;
     overflow: hidden;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     font-family: inherit;
-    padding: 0;
-    transition: transform .18s ease, background .15s, border-color .15s, box-shadow .15s;
-    will-change: transform;
+    transition: background .15s, border-color .15s, box-shadow .15s;
   }
   .grid[data-cols="1"] .tile { border-radius: 20px; }
 
-  .tile .char { line-height: 1; pointer-events: none; display: block; }
-  .grid[data-cols="3"] .char { font-size: 30px; }
-  .grid[data-cols="2"] .char { font-size: 48px; }
-  .grid[data-cols="1"] .char { font-size: 88px; }
-
-  @media (min-width: 700px) {
-    .grid[data-cols="3"] { grid-template-columns: repeat(5, 1fr); }
-    .grid[data-cols="2"] { grid-template-columns: repeat(4, 1fr); }
-    .grid[data-cols="3"] .char { font-size: 34px; }
-    .grid[data-cols="2"] .char { font-size: 52px; }
+  .tile .char {
+    display: block;
+    line-height: 1;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
   }
+
+  .tile .name {
+    display: none;
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+    font-size: 10px;
+    line-height: 1.15;
+    color: var(--muted);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    background: linear-gradient(transparent, rgba(0,0,0,.35) 40%);
+    padding-top: 6px;
+    padding-bottom: 1px;
+    border-radius: 0 0 12px 12px;
+  }
+  body.show-names .tile.has-name .name { display: block; }
 
   .tile.fav {
     border-color: rgba(245,165,36,.5);
     background: rgba(245,165,36,.08);
   }
-  .tile.unused {
-    opacity: .35;
-  }
+  .tile.unused { opacity: .38; }
   .tile.selected {
     border-color: var(--accent);
     background: rgba(79,140,255,.20);
@@ -194,13 +239,23 @@
   }
   .tile.selected::after {
     content: '✓';
-    position: absolute; top: 3px; left: 6px;
-    font-size: 13px; font-weight: 700; color: var(--accent);
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    pointer-events: none;
   }
 
   .tile .mark {
-    position: absolute; top: 3px; right: 6px;
-    font-size: 11px; color: var(--fav); pointer-events: none;
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    font-size: 11px;
+    color: var(--fav);
+    pointer-events: none;
+    z-index: 2;
   }
   .tile.unused .mark { color: var(--unused); }
 
@@ -215,26 +270,44 @@
 
   body.mode-edit .tile { touch-action: none; cursor: grab; }
   body.mode-edit .tile.add-tile { touch-action: manipulation; }
-  body.mode-delete .tile { cursor: pointer; }
+  body.mode-select .tile { touch-action: manipulation; }
+  body.mode-edit .tab,
+  body.mode-select .tab { touch-action: manipulation; }
 
-  .tile.dragging { opacity: .25; }
-  .tile.drop-target {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(79,140,255,.5) inset;
+  .tile.dragging {
+    opacity: .18;
   }
 
   .drag-ghost {
-    position: fixed; left: 0; top: 0;
-    z-index: 999; pointer-events: none;
-    opacity: .92;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 999;
+    pointer-events: none;
+    opacity: .95;
     border-radius: 14px;
-    box-shadow: 0 14px 34px rgba(0,0,0,.6);
+    box-shadow: 0 14px 34px rgba(0,0,0,.65);
     border: 1px solid var(--accent);
     background: var(--panel2);
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
+    will-change: transform;
   }
-  .drag-ghost .char { line-height: 1; }
+  .drag-ghost .char { line-height: 1; pointer-events: none; }
+
+  .insert-line {
+    position: absolute;
+    width: 4px;
+    border-radius: 4px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(79,140,255,.65);
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+    transition: left .09s ease-out, top .09s ease-out, height .09s ease-out;
+  }
 
   /* add tile */
   .tile.add-tile {
@@ -243,7 +316,9 @@
     color: var(--muted);
   }
   .tile.add-tile .plus {
-    font-size: 30px; line-height: 1; font-weight: 300;
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 300;
   }
 
   .empty-note {
@@ -254,13 +329,18 @@
     padding: 26px 12px;
   }
 
-  /* ---------- Bottom bar ---------- */
+  /* ---- Bottom bar ---- */
   .bottom-bar {
-    position: fixed; left: 0; right: 0; bottom: 0;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 60;
-    display: flex; gap: 8px; align-items: flex-end;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
     padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(20,24,33,.95);
+    background: rgba(20,24,33,.96);
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border-top: 1px solid var(--border);
@@ -268,7 +348,8 @@
 
   #inputArea {
     flex: 1 1 auto;
-    min-height: 42px; max-height: 130px;
+    min-height: 42px;
+    max-height: 130px;
     resize: none;
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -279,18 +360,40 @@
     font-family: inherit;
     line-height: 1.4;
     outline: none;
+    transition: border-color .15s;
   }
   #inputArea:focus { border-color: var(--accent); }
 
-  /* ---------- Modal ---------- */
+  #copyInputBtn {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    flex: 0 0 auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #copyInputBtn:active { background: var(--panel2); }
+
+  /* ---- Modal ---- */
   .modal-root {
-    position: fixed; inset: 0; z-index: 300;
-    display: flex; align-items: flex-end; justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
   }
   .modal-root.hidden { display: none; }
 
   .modal-backdrop {
-    position: absolute; inset: 0;
+    position: absolute;
+    inset: 0;
     background: rgba(0,0,0,.62);
     animation: fadeIn .15s ease;
   }
@@ -298,7 +401,8 @@
 
   .modal-panel {
     position: relative;
-    width: 100%; max-width: 560px;
+    width: 100%;
+    max-width: 560px;
     max-height: 86vh;
     overflow-y: auto;
     background: var(--panel2);
@@ -314,33 +418,51 @@
   }
 
   .modal-title {
-    font-size: 14px; font-weight: 700;
-    margin-bottom: 12px; color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
   }
   .modal-message {
-    font-size: 14px; color: var(--muted); line-height: 1.6;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
     margin-bottom: 4px;
+    white-space: pre-wrap;
   }
   .modal-textarea {
-    width: 100%; min-height: 130px; resize: vertical;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--text);
-    padding: 12px; font-size: 16px; font-family: inherit;
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 16px;
+    font-family: inherit;
     outline: none;
   }
   .modal-textarea:focus { border-color: var(--accent); }
   .modal-input {
     width: 100%;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--text);
-    padding: 12px; font-size: 16px; font-family: inherit;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 16px;
+    font-family: inherit;
     outline: none;
   }
   .modal-input:focus { border-color: var(--accent); }
 
   .modal-actions {
-    display: flex; gap: 8px; justify-content: flex-end;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
     margin-top: 14px;
+    flex-wrap: wrap;
   }
 
   .modal-list { display: flex; flex-direction: column; gap: 2px; }
@@ -348,10 +470,12 @@
     width: 100%;
     text-align: left;
     padding: 14px 12px;
-    border: none; border-radius: 12px;
+    border: none;
+    border-radius: 12px;
     background: transparent;
     color: var(--text);
-    font-size: 15px; font-family: inherit;
+    font-size: 15px;
+    font-family: inherit;
     cursor: pointer;
   }
   .modal-item:active { background: rgba(255,255,255,.07); }
@@ -363,20 +487,18 @@
     border: 1px solid var(--border);
     background: var(--panel);
     color: var(--text);
-    font-size: 14px; font-family: inherit;
+    font-size: 14px;
+    font-family: inherit;
     cursor: pointer;
   }
-  .btn.primary {
-    background: var(--accent); border-color: var(--accent); color: #fff;
-  }
-  .btn.danger {
-    background: var(--danger); border-color: var(--danger); color: #fff;
-  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 
-  /* ---------- Toast ---------- */
+  /* ---- Toast ---- */
   .toast {
     position: fixed;
-    left: 50%; bottom: calc(96px + env(safe-area-inset-bottom));
+    left: 50%;
+    bottom: calc(96px + env(safe-area-inset-bottom));
     transform: translateX(-50%) translateY(10px);
     background: #232a3a;
     color: #fff;
@@ -391,7 +513,8 @@
     max-width: 86vw;
     text-align: center;
     white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .toast.show {
     opacity: 1;
@@ -415,10 +538,13 @@
 
 <header class="topbar">
   <div class="title-row">
-    <div class="app-title" title="絵文字帳">🗂️</div>
-    <div class="spacer"></div>
-    <button class="icon-btn" id="editBtn" type="button" title="編集モード">✏️</button>
-    <button class="icon-btn" id="delBtn" type="button" title="削除モード">🗑️</button>
+    <div class="app-title" title="絵文字ノート">
+      <span class="logo">🗂️</span>
+      <span class="txt">絵文字ノート</span>
+    </div>
+    <button class="icon-btn" id="nameBtn" type="button" title="名前表示">🏷️</button>
+    <button class="icon-btn" id="editBtn" type="button" title="並び替え">↕️</button>
+    <button class="icon-btn" id="selectBtn" type="button" title="選択">☑️</button>
     <button class="icon-btn wide" id="colBtn" type="button" title="列数">3列</button>
     <button class="icon-btn" id="menuBtn" type="button" title="メニュー">⋯</button>
   </div>
@@ -435,9 +561,8 @@
 <main class="grid" id="grid" data-cols="3"></main>
 
 <div class="bottom-bar">
-  <textarea id="inputArea" rows="1" placeholder="絵文字をタップするとここに入力されます"></textarea>
-  <button class="icon-btn" id="copyInputBtn" type="button" title="コピー">📋</button>
-  <button class="icon-btn" id="clearInputBtn" type="button" title="クリア">✕</button>
+  <textarea id="inputArea" rows="1" placeholder="絵文字をタップ"></textarea>
+  <button id="copyInputBtn" type="button">コピー</button>
 </div>
 
 <div class="modal-root hidden" id="modalRoot">
@@ -453,12 +578,13 @@
 (function () {
   'use strict';
 
-  /* =========================================================
-     定数・ユーティリティ
-  ========================================================= */
-  var STORAGE_KEY   = 'emoji-registry-v3';
-  var LEGACY_KEYS   = ['emoji-registry-v2', 'emoji-registry-v1'];
-  var COLS_KEY      = 'emoji-registry-cols-v3';
+  /* =====================================================
+     定数
+  ===================================================== */
+  var STORAGE_KEY   = 'emoji-registry-v4';
+  var LEGACY_KEYS   = ['emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
+  var COLS_KEY      = 'emoji-registry-cols-v4';
+  var NAMES_KEY     = 'emoji-registry-names-v4';
 
   var STATUS_ORDER = { favorite: 0, normal: 1, unused: 2 };
 
@@ -475,9 +601,9 @@
     });
   }
 
-  /* =========================================================
+  /* =====================================================
      ストレージ（使えなければメモリ）
-  ========================================================= */
+  ===================================================== */
   var storageAvailable = (function () {
     try {
       var k = '__t__';
@@ -503,9 +629,9 @@
     memoryStore[key] = value;
   }
 
-  /* =========================================================
+  /* =====================================================
      Toast
-  ========================================================= */
+  ===================================================== */
   var toastEl = $('toast');
   var toastTimer = null;
 
@@ -513,14 +639,12 @@
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () {
-      toastEl.classList.remove('show');
-    }, 1700);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1700);
   }
 
-  /* =========================================================
-     データ正規化（旧形式も取り込む）
-  ========================================================= */
+  /* =====================================================
+     データ正規化
+  ===================================================== */
   function normalizeEmojis(arr) {
     var out = [];
     if (!Array.isArray(arr)) return out;
@@ -529,7 +653,7 @@
       var item = arr[i];
 
       if (typeof item === 'string') {
-        if (item) out.push({ id: uuid(), char: item, status: 'normal' });
+        if (item) out.push({ id: uuid(), char: item, status: 'normal', name: '' });
         continue;
       }
 
@@ -538,7 +662,8 @@
         out.push({
           id: item.id || uuid(),
           char: item.char,
-          status: st
+          status: st,
+          name: typeof item.name === 'string' ? item.name : ''
         });
       }
     }
@@ -550,7 +675,7 @@
 
     var list = null;
     if (Array.isArray(raw.folders)) list = raw.folders;
-    else if (Array.isArray(raw.tabs)) list = raw.tabs;   // 旧形式
+    else if (Array.isArray(raw.tabs)) list = raw.tabs;
     if (!list) return null;
 
     var folders = [];
@@ -575,9 +700,9 @@
     });
   }
 
-  /* =========================================================
+  /* =====================================================
      状態
-  ========================================================= */
+  ===================================================== */
   function createDefaultState() {
     var id = uuid();
     return {
@@ -587,39 +712,40 @@
   }
 
   var state = createDefaultState();
-  var mode = 'normal';            // 'normal' | 'edit' | 'delete'
-  var selected = {};              // id -> true
+  var mode = 'normal';         // 'normal' | 'edit' | 'select'
+  var selected = {};           // id -> true
+  var showNames = false;
 
   function loadState() {
     var raw = null;
     var keys = [STORAGE_KEY].concat(LEGACY_KEYS);
-
     for (var i = 0; i < keys.length; i++) {
       var s = storageGet(keys[i]);
       if (s) { raw = s; break; }
     }
-    if (!raw) return;
 
-    try {
-      var parsed = JSON.parse(raw);
-      var folders = normalizeFolders(parsed);
-      if (!folders) return;
-
-      var activeId = parsed.activeFolderId;
-      if (!folders.some(function (f) { return f.id === activeId; })) {
-        activeId = folders[0].id;
-      }
-
-      state.folders = folders;
-      state.activeFolderId = activeId;
-    } catch (e) {
-      /* 壊れていたら既定値のまま */
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        var folders = normalizeFolders(parsed);
+        if (folders) {
+          var activeId = parsed.activeFolderId;
+          if (!folders.some(function (f) { return f.id === activeId; })) {
+            activeId = folders[0].id;
+          }
+          state.folders = folders;
+          state.activeFolderId = activeId;
+        }
+      } catch (e) { /* 無視 */ }
     }
+
+    var nv = storageGet(NAMES_KEY);
+    showNames = nv === '1';
   }
 
   function save() {
     storageSet(STORAGE_KEY, JSON.stringify({
-      version: 3,
+      version: 4,
       folders: state.folders,
       activeFolderId: state.activeFolderId
     }));
@@ -646,26 +772,27 @@
     return null;
   }
 
-  /* =========================================================
-     DOM 参照
-  ========================================================= */
-  var tabsEl      = $('tabs');
-  var gridEl      = $('grid');
-  var modeBar     = $('modeBar');
-  var editBtn     = $('editBtn');
-  var delBtn      = $('delBtn');
-  var colBtn      = $('colBtn');
-  var menuBtn     = $('menuBtn');
-  var inputArea   = $('inputArea');
+  /* =====================================================
+     DOM
+  ===================================================== */
+  var tabsEl    = $('tabs');
+  var gridEl    = $('grid');
+  var modeBar   = $('modeBar');
+  var editBtn   = $('editBtn');
+  var selectBtn = $('selectBtn');
+  var colBtn    = $('colBtn');
+  var menuBtn   = $('menuBtn');
+  var nameBtn   = $('nameBtn');
+  var inputArea = $('inputArea');
 
-  var modalRoot    = $('modalRoot');
-  var modalBackdrop= $('modalBackdrop');
-  var modalPanel   = $('modalPanel');
-  var fileInput    = $('fileInput');
+  var modalRoot     = $('modalRoot');
+  var modalBackdrop = $('modalBackdrop');
+  var modalPanel    = $('modalPanel');
+  var fileInput     = $('fileInput');
 
-  /* =========================================================
+  /* =====================================================
      モーダル
-  ========================================================= */
+  ===================================================== */
   function openModal(html, onMount) {
     modalPanel.innerHTML = html;
     modalRoot.classList.remove('hidden');
@@ -697,15 +824,16 @@
     );
   }
 
-  /* =========================================================
+  /* =====================================================
      列数
-  ========================================================= */
+  ===================================================== */
   var COLS_CYCLE = [3, 2, 1];
 
   function applyCols(cols) {
     gridEl.dataset.cols = String(cols);
     colBtn.textContent = cols + '列';
     storageSet(COLS_KEY, String(cols));
+    requestAnimationFrame(scheduleResizeEmojis);
   }
 
   function loadCols() {
@@ -720,19 +848,58 @@
     applyCols(next);
   }
 
-  /* =========================================================
+  /* =====================================================
+     絵文字の大きさ調整
+  ===================================================== */
+  var sizeRaf = null;
+
+  function scheduleResizeEmojis() {
+    if (sizeRaf) cancelAnimationFrame(sizeRaf);
+    sizeRaf = requestAnimationFrame(function () {
+      sizeRaf = null;
+      resizeTileChars();
+    });
+  }
+
+  function resizeTileChars() {
+    var tiles = gridEl.querySelectorAll('.tile');
+    for (var i = 0; i < tiles.length; i++) {
+      var tile = tiles[i];
+      var char = tile.querySelector('.char');
+      if (!char) continue;
+
+      var w = tile.clientWidth;
+      var h = tile.clientHeight;
+      if (!w || !h) continue;
+
+      var base = Math.min(w, h);
+      var hasName = tile.classList.contains('has-name') && showNames;
+      var factor = hasName ? 0.60 : 0.88;
+      char.style.fontSize = (base * factor) + 'px';
+    }
+  }
+
+  window.addEventListener('resize', scheduleResizeEmojis);
+  window.addEventListener('orientationchange', scheduleResizeEmojis);
+
+  /* =====================================================
      描画
-  ========================================================= */
+  ===================================================== */
   function render() {
     renderTabs();
     renderGrid();
     renderModeBar();
     renderToolbar();
+    scheduleResizeEmojis();
   }
 
   function renderToolbar() {
     editBtn.classList.toggle('active', mode === 'edit');
-    delBtn.classList.toggle('active', mode === 'delete');
+    selectBtn.classList.toggle('active', mode === 'select');
+    nameBtn.classList.toggle('active', showNames);
+    document.body.classList.toggle('show-names', showNames);
+    document.body.classList.toggle('mode-edit', mode === 'edit');
+    document.body.classList.toggle('mode-select', mode === 'select');
   }
 
   function renderTabs() {
@@ -799,7 +966,7 @@
     var folder = getActiveFolder();
     gridEl.innerHTML = '';
 
-    if (folder.emojis.length === 0 && mode === 'delete') {
+    if (folder.emojis.length === 0 && mode !== 'normal') {
       var note = document.createElement('div');
       note.className = 'empty-note';
       note.textContent = '絵文字がありません';
@@ -822,6 +989,8 @@
       });
       gridEl.appendChild(addTile);
     }
+
+    ensureInsertLine();
   }
 
   function makeTile(item, folderId) {
@@ -831,6 +1000,7 @@
     if (item.status === 'favorite') btn.classList.add('fav');
     if (item.status === 'unused') btn.classList.add('unused');
     if (selected[item.id]) btn.classList.add('selected');
+    if (item.name) btn.classList.add('has-name');
 
     btn.dataset.id = item.id;
     btn.dataset.folder = folderId;
@@ -840,6 +1010,13 @@
     span.className = 'char';
     span.textContent = item.char;
     btn.appendChild(span);
+
+    if (item.name) {
+      var nm = document.createElement('span');
+      nm.className = 'name';
+      nm.textContent = item.name;
+      btn.appendChild(nm);
+    }
 
     if (item.status === 'favorite') {
       var m1 = document.createElement('span');
@@ -866,8 +1043,7 @@
     modeBar.classList.add('show');
 
     if (mode === 'edit') {
-      modeBar.innerHTML =
-        '<span class="grow">ドラッグで並び替え / タブへドロップで移動</span>';
+      modeBar.innerHTML = '<span class="grow">ドラッグで並び替え</span>';
       return;
     }
 
@@ -875,50 +1051,55 @@
     modeBar.innerHTML =
       '<span class="grow">' + count + ' 個選択中</span>' +
       '<button class="mini-btn" id="selAllBtn" type="button">全選択</button>' +
+      '<button class="mini-btn" id="moveSelBtn" type="button">移動</button>' +
       '<button class="mini-btn danger" id="delSelBtn" type="button">削除</button>';
 
-    var selAll = modeBar.querySelector('#selAllBtn');
-    var delSel = modeBar.querySelector('#delSelBtn');
-
-    selAll.addEventListener('click', function () {
+    modeBar.querySelector('#selAllBtn').addEventListener('click', function () {
       var folder = getActiveFolder();
-      if (Object.keys(selected).length === folder.emojis.length) {
-        clearSelection();
-      } else {
-        folder.emojis.forEach(function (e) { selected[e.id] = true; });
-      }
+      if (Object.keys(selected).length === folder.emojis.length) clearSelection();
+      else folder.emojis.forEach(function (e) { selected[e.id] = true; });
       render();
     });
 
-    delSel.addEventListener('click', deleteSelected);
+    modeBar.querySelector('#moveSelBtn').addEventListener('click', function () {
+      var ids = Object.keys(selected);
+      if (!ids.length) { toast('選択されていません'); return; }
+      openFolderPicker(ids);
+    });
+
+    modeBar.querySelector('#delSelBtn').addEventListener('click', deleteSelected);
   }
 
-  /* =========================================================
-     モード切り替え
-  ========================================================= */
-  function clearSelection() {
-    selected = {};
-  }
+  /* =====================================================
+     モード
+  ===================================================== */
+  function clearSelection() { selected = {}; }
 
   function setMode(next) {
     mode = (mode === next) ? 'normal' : next;
-    if (mode !== 'delete') clearSelection();
-    document.body.classList.toggle('mode-edit', mode === 'edit');
-    document.body.classList.toggle('mode-delete', mode === 'delete');
+    if (mode !== 'select') clearSelection();
     render();
   }
 
   editBtn.addEventListener('click', function () { setMode('edit'); });
-  delBtn.addEventListener('click', function () { setMode('delete'); });
+  selectBtn.addEventListener('click', function () { setMode('select'); });
   colBtn.addEventListener('click', cycleCols);
   menuBtn.addEventListener('click', openMainMenu);
 
-  /* =========================================================
-     選択削除
-  ========================================================= */
+  nameBtn.addEventListener('click', function () {
+    showNames = !showNames;
+    storageSet(NAMES_KEY, showNames ? '1' : '0');
+    renderToolbar();
+    scheduleResizeEmojis();
+    toast(showNames ? '名前を表示' : '名前を非表示');
+  });
+
+  /* =====================================================
+     削除 / フォルダ移動
+  ===================================================== */
   function deleteSelected() {
     var ids = Object.keys(selected);
-    if (ids.length === 0) { toast('選択されていません'); return; }
+    if (!ids.length) { toast('選択されていません'); return; }
 
     confirmDialog(ids.length + ' 個の絵文字を削除しますか？', '削除', function () {
       var folder = getActiveFolder();
@@ -930,9 +1111,65 @@
     });
   }
 
-  /* =========================================================
-     絵文字のパース
-  ========================================================= */
+  function openFolderPicker(ids) {
+    var others = state.folders.filter(function (f) { return f.id !== state.activeFolderId; });
+    if (others.length === 0) {
+      toast('他のフォルダがありません');
+      return;
+    }
+
+    var html = '<div class="modal-title">移動先を選択</div><div class="modal-list">';
+    others.forEach(function (f) {
+      html += '<button class="modal-item" data-folder="' + f.id + '" type="button">📁 ' + escapeHtml(f.name) + '</button>';
+    });
+    html += '<button class="modal-item" data-act="cancel" type="button">キャンセル</button></div>';
+
+    openModal(html, function (root) {
+      var btns = root.querySelectorAll('[data-folder]');
+      Array.prototype.forEach.call(btns, function (btn) {
+        btn.addEventListener('click', function () {
+          moveSelectedTo(btn.dataset.folder, ids);
+          closeModal();
+        });
+      });
+      root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+    });
+  }
+
+  function moveSelectedTo(targetFolderId, ids) {
+    var from = getActiveFolder();
+    var to = getFolder(targetFolderId);
+    if (!to) return;
+
+    var moving = [];
+    from.emojis = from.emojis.filter(function (e) {
+      if (ids.indexOf(e.id) !== -1) { moving.push(e); return false; }
+      return true;
+    });
+
+    var existing = {};
+    to.emojis.forEach(function (e) { existing[e.char] = true; });
+
+    var added = 0;
+    moving.forEach(function (e) {
+      if (!existing[e.char]) {
+        to.emojis.push(e);
+        existing[e.char] = true;
+        added++;
+      }
+    });
+
+    sortEmojis(to);
+
+    clearSelection();
+    save();
+    render();
+    toast(added + ' 個を「' + to.name + '」に移動しました');
+  }
+
+  /* =====================================================
+     絵文字パース
+  ===================================================== */
   function parseEmojis(text) {
     var segments;
     if (typeof Intl !== 'undefined' && Intl.Segmenter) {
@@ -959,9 +1196,9 @@
     }
   }
 
-  /* =========================================================
-     ＋ ボタン → 貼り付けシート
-  ========================================================= */
+  /* =====================================================
+     追加シート
+  ===================================================== */
   function openPasteSheet() {
     openModal(
       '<div class="modal-title">「' + escapeHtml(getActiveFolder().name) + '」に絵文字を追加</div>' +
@@ -986,7 +1223,7 @@
           var added = 0;
           emojis.forEach(function (ch) {
             if (!existing[ch]) {
-              folder.emojis.push({ id: uuid(), char: ch, status: 'normal' });
+              folder.emojis.push({ id: uuid(), char: ch, status: 'normal', name: '' });
               existing[ch] = true;
               added++;
             }
@@ -1002,9 +1239,9 @@
     );
   }
 
-  /* =========================================================
+  /* =====================================================
      フォルダ操作
-  ========================================================= */
+  ===================================================== */
   function openFolderCreate() {
     openModal(
       '<div class="modal-title">新しいフォルダ</div>' +
@@ -1057,7 +1294,9 @@
           if (folder.emojis.length === 0) { toast('空です'); return; }
           confirmDialog('「' + folder.name + '」の絵文字をすべて削除しますか？', '削除', function () {
             folder.emojis = [];
-            save(); render(); toast('削除しました');
+            save();
+            render();
+            toast('削除しました');
           });
         });
         root.querySelector('[data-act="delete"]').addEventListener('click', function () {
@@ -1085,7 +1324,9 @@
           var v = inp.value.trim();
           if (!v) { toast('名前を入力してください'); return; }
           folder.name = v;
-          save(); render(); closeModal();
+          save();
+          render();
+          closeModal();
         }
 
         root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
@@ -1098,24 +1339,22 @@
   }
 
   function deleteFolder(folder) {
-    if (state.folders.length <= 1) {
-      toast('最後のフォルダは削除できません');
-      return;
-    }
+    if (state.folders.length <= 1) { toast('最後のフォルダは削除できません'); return; }
     confirmDialog('「' + folder.name + '」を削除しますか？中の絵文字も消えます。', '削除', function () {
       state.folders = state.folders.filter(function (f) { return f.id !== folder.id; });
-      if (state.activeFolderId === folder.id) {
-        state.activeFolderId = state.folders[0].id;
-      }
+      if (state.activeFolderId === folder.id) state.activeFolderId = state.folders[0].id;
       clearSelection();
-      save(); render();
+      save();
+      render();
       toast('削除しました');
     });
   }
 
-  /* =========================================================
+  /* =====================================================
      メインメニュー（エクスポート / インポート）
-  ========================================================= */
+  ===================================================== */
+  var pendingImportMode = 'replace';
+
   function openMainMenu() {
     openModal(
       '<div class="modal-title">メニュー</div>' +
@@ -1147,7 +1386,7 @@
 
   function exportAll() {
     var data = {
-      version: 3,
+      version: 4,
       app: 'emoji-registry',
       exportedAt: new Date().toISOString(),
       folders: state.folders,
@@ -1155,7 +1394,7 @@
     };
 
     var json = JSON.stringify(data, null, 2);
-    var filename = 'emoji-backup-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+    var filename = 'emoji-notebook-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
 
     try {
       var blob = new Blob([json], { type: 'application/json' });
@@ -1169,7 +1408,6 @@
       setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
       toast('エクスポートしました');
     } catch (e) {
-      // フォールバック：クリップボード
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(json).then(function () {
           toast('JSONをコピーしました');
@@ -1182,8 +1420,6 @@
     }
   }
 
-  var pendingImportMode = 'replace';
-
   fileInput.addEventListener('change', function (e) {
     var file = e.target.files && e.target.files[0];
     fileInput.value = '';
@@ -1191,18 +1427,13 @@
 
     var reader = new FileReader();
     reader.onload = function () {
-      var folders;
+      var folders = null;
       try {
         var parsed = JSON.parse(String(reader.result));
         folders = normalizeFolders(parsed);
-      } catch (err) {
-        folders = null;
-      }
+      } catch (err) { folders = null; }
 
-      if (!folders) {
-        toast('読み込めないファイルです');
-        return;
-      }
+      if (!folders) { toast('読み込めないファイルです'); return; }
 
       if (pendingImportMode === 'replace') {
         confirmDialog(
@@ -1212,24 +1443,24 @@
             state.folders = folders;
             state.activeFolderId = folders[0].id;
             clearSelection();
-            save(); render();
+            save();
+            render();
             toast('インポートしました');
           }
         );
       } else {
         var added = 0;
-        var existingNames = {};
-        state.folders.forEach(function (f) { existingNames[f.name] = f; });
+        var byName = {};
+        state.folders.forEach(function (f) { byName[f.name] = f; });
 
         folders.forEach(function (f) {
-          if (existingNames[f.name]) {
-            // 同名フォルダには絵文字をマージ
-            var target = existingNames[f.name];
+          if (byName[f.name]) {
+            var target = byName[f.name];
             var chars = {};
             target.emojis.forEach(function (e) { chars[e.char] = true; });
             f.emojis.forEach(function (e) {
               if (!chars[e.char]) {
-                target.emojis.push({ id: uuid(), char: e.char, status: e.status });
+                target.emojis.push({ id: uuid(), char: e.char, status: e.status, name: e.name || '' });
                 chars[e.char] = true;
                 added++;
               }
@@ -1238,26 +1469,44 @@
           } else {
             var nf = { id: uuid(), name: f.name, emojis: f.emojis };
             state.folders.push(nf);
-            existingNames[f.name] = nf;
+            byName[f.name] = nf;
             added += f.emojis.length;
           }
         });
 
-        save(); render();
+        save();
+        render();
         toast(added + ' 個追加しました');
       }
     };
     reader.readAsText(file);
   });
 
-  /* =========================================================
-     絵文字への操作：タップ / スワイプ / ドラッグ
-  ========================================================= */
+  /* =====================================================
+     絵文字タイル操作（タップ / スワイプ / 長押し / ドラッグ）
+  ===================================================== */
   var suppressTap = false;
-  var swipe = null;
-  var drag = null;
+  var gesture = null;    // スワイプ & 長押し用
+  var dragState = null;  // ドラッグ用
   var ghost = null;
-  var dropTarget = null;
+  var insertLineEl = null;
+  var dragInsert = null;
+
+  function ensureInsertLine() {
+    insertLineEl = document.createElement('div');
+    insertLineEl.className = 'insert-line';
+    gridEl.appendChild(insertLineEl);
+  }
+
+  function showInsertLine() {
+    if (!insertLineEl) return;
+    insertLineEl.style.display = 'block';
+  }
+
+  function hideInsertLine() {
+    if (!insertLineEl) return;
+    insertLineEl.style.display = 'none';
+  }
 
   gridEl.addEventListener('pointerdown', function (e) {
     var tile = e.target.closest('.tile');
@@ -1269,7 +1518,7 @@
     var folderId = tile.dataset.folder;
     var char = tile.dataset.char;
 
-    if (mode === 'delete') {
+    if (mode === 'select') {
       e.preventDefault();
       if (selected[id]) delete selected[id];
       else selected[id] = true;
@@ -1279,16 +1528,17 @@
 
     if (mode === 'edit') {
       e.preventDefault();
-      startDrag(e, tile, id, folderId);
+      startDrag(e, tile, id, folderId, char);
       return;
     }
 
-    startSwipe(e, tile, id, folderId, char);
+    // normal モード: タップ / スワイプ / 長押し
+    startGesture(e, tile, id, folderId, char);
   });
 
-  /* ---------- スワイプ ---------- */
-  function startSwipe(e, tile, id, folderId, char) {
-    swipe = {
+  /* ---- 通常モード：タップ・スワイプ・長押し ---- */
+  function startGesture(e, tile, id, folderId, char) {
+    gesture = {
       id: id,
       folderId: folderId,
       char: char,
@@ -1296,63 +1546,108 @@
       x0: e.clientX,
       y0: e.clientY,
       dx: 0,
-      active: false,
-      pid: e.pointerId
+      swiping: false,
+      longPressed: false,
+      moved: false,
+      pid: e.pointerId,
+      longTimer: null
     };
-    window.addEventListener('pointermove', onSwipeMove, { passive: false });
-    window.addEventListener('pointerup', onSwipeEnd);
-    window.addEventListener('pointercancel', onSwipeEnd);
+
+    // 長押しタイマー開始（名前編集などのメニュー）
+    gesture.longTimer = setTimeout(function () {
+      if (!gesture) return;
+      if (gesture.moved || gesture.swiping) return;
+      gesture.longPressed = true;
+      suppressTap = true;
+      openEmojiMenu(gesture.id);
+      if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
+    }, 500);
+
+    window.addEventListener('pointermove', onGestureMove, { passive: false });
+    window.addEventListener('pointerup', onGestureEnd);
+    window.addEventListener('pointercancel', onGestureCancel);
   }
 
-  function onSwipeMove(e) {
-    if (!swipe || e.pointerId !== swipe.pid) return;
+  function onGestureMove(e) {
+    if (!gesture || e.pointerId !== gesture.pid) return;
 
-    var dx = e.clientX - swipe.x0;
-    var dy = e.clientY - swipe.y0;
+    var dx = e.clientX - gesture.x0;
+    var dy = e.clientY - gesture.y0;
+    var dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (!swipe.active) {
-      if (Math.abs(dx) < 12) return;
-      if (Math.abs(dx) < Math.abs(dy)) return;
-      swipe.active = true;
-      swipe.tile.style.transition = 'none';
-      swipe.tile.style.zIndex = '5';
+    if (dist > 8) {
+      gesture.moved = true;
+      if (gesture.longTimer) {
+        clearTimeout(gesture.longTimer);
+        gesture.longTimer = null;
+      }
     }
 
-    swipe.dx = dx;
-    var capped = Math.max(-130, Math.min(130, dx));
-    swipe.tile.style.transform = 'translateX(' + capped + 'px)';
-    swipe.tile.classList.toggle('swipe-fav', dx < -50);
-    swipe.tile.classList.toggle('swipe-unused', dx > 50);
+    if (!gesture.swiping) {
+      if (Math.abs(dx) < 14) return;
+      if (Math.abs(dx) <= Math.abs(dy)) return; // 縦はスクロール
+      gesture.swiping = true;
+      gesture.tile.style.transition = 'none';
+      gesture.tile.style.zIndex = '5';
+    }
+
+    gesture.dx = dx;
+    var capped = Math.max(-140, Math.min(140, dx));
+    gesture.tile.style.transform = 'translateX(' + capped + 'px)';
+    gesture.tile.classList.toggle('swipe-fav', dx < -50);
+    gesture.tile.classList.toggle('swipe-unused', dx > 50);
   }
 
-  function onSwipeEnd(e) {
-    window.removeEventListener('pointermove', onSwipeMove);
-    window.removeEventListener('pointerup', onSwipeEnd);
-    window.removeEventListener('pointercancel', onSwipeEnd);
+  function onGestureEnd() {
+    window.removeEventListener('pointermove', onGestureMove);
+    window.removeEventListener('pointerup', onGestureEnd);
+    window.removeEventListener('pointercancel', onGestureCancel);
 
-    if (!swipe) return;
-    var s = swipe;
-    swipe = null;
+    if (!gesture) return;
+    var g = gesture;
+    gesture = null;
 
-    s.tile.style.transition = '';
-    s.tile.style.transform = '';
-    s.tile.style.zIndex = '';
-    s.tile.classList.remove('swipe-fav', 'swipe-unused');
+    if (g.longTimer) { clearTimeout(g.longTimer); g.longTimer = null; }
 
-    if (!s.active) {
-      insertEmojiToInput(s.char);
+    g.tile.style.transition = '';
+    g.tile.style.transform = '';
+    g.tile.style.zIndex = '';
+    g.tile.classList.remove('swipe-fav', 'swipe-unused');
+
+    if (g.longPressed) {
+      setTimeout(function () { suppressTap = false; }, 0);
       return;
     }
 
-    if (s.dx < -55) setStatus(s.id, 'favorite');
-    else if (s.dx > 55) setStatus(s.id, 'unused');
+    if (!g.swiping) {
+      insertEmojiToInput(g.char);
+      return;
+    }
+
+    if (g.dx < -55) setStatus(g.id, 'favorite');
+    else if (g.dx > 55) setStatus(g.id, 'unused');
+  }
+
+  function onGestureCancel() {
+    window.removeEventListener('pointermove', onGestureMove);
+    window.removeEventListener('pointerup', onGestureEnd);
+    window.removeEventListener('pointercancel', onGestureCancel);
+
+    if (!gesture) return;
+    var g = gesture;
+    gesture = null;
+
+    if (g.longTimer) clearTimeout(g.longTimer);
+    g.tile.style.transition = '';
+    g.tile.style.transform = '';
+    g.tile.style.zIndex = '';
+    g.tile.classList.remove('swipe-fav', 'swipe-unused');
   }
 
   function setStatus(id, status) {
     var found = getEmojiById(id);
     if (!found) return;
     var emoji = found.emoji;
-
     var next = (emoji.status === status) ? 'normal' : status;
     emoji.status = next;
     sortEmojis(found.folder);
@@ -1364,182 +1659,317 @@
     else toast('通常に戻しました');
   }
 
-  /* ---------- ドラッグ ---------- */
-  function startDrag(e, tile, id, folderId) {
-    drag = {
+  /* ---- 絵文字メニュー（長押し） ---- */
+  function openEmojiMenu(id) {
+    var found = getEmojiById(id);
+    if (!found) return;
+    var e = found.emoji;
+
+    var favLabel = e.status === 'favorite' ? '★ お気に入りを解除' : '★ お気に入りにする';
+    var unusedLabel = e.status === 'unused' ? '− 使わないを解除' : '− 使わないにする';
+
+    openModal(
+      '<div class="modal-title"><span style="font-size:22px">' + escapeHtml(e.char) + '</span>' +
+        (e.name ? '　' + escapeHtml(e.name) : '') + '</div>' +
+      '<div class="modal-list">' +
+        '<button class="modal-item" data-act="name" type="button">🏷️ 名前を' +
+          (e.name ? '編集' : 'つける') + '</button>' +
+        '<button class="modal-item" data-act="fav" type="button">' + favLabel + '</button>' +
+        '<button class="modal-item" data-act="unused" type="button">' + unusedLabel + '</button>' +
+        '<button class="modal-item danger" data-act="delete" type="button">🗑️ 削除</button>' +
+        '<button class="modal-item" data-act="cancel" type="button">キャンセル</button>' +
+      '</div>',
+      function (root) {
+        root.querySelector('[data-act="name"]').addEventListener('click', function () {
+          closeModal();
+          openNameEditor(id);
+        });
+        root.querySelector('[data-act="fav"]').addEventListener('click', function () {
+          closeModal();
+          setStatus(id, 'favorite');
+        });
+        root.querySelector('[data-act="unused"]').addEventListener('click', function () {
+          closeModal();
+          setStatus(id, 'unused');
+        });
+        root.querySelector('[data-act="delete"]').addEventListener('click', function () {
+          closeModal();
+          confirmDialog('この絵文字を削除しますか？', '削除', function () {
+            var f = getEmojiById(id);
+            if (!f) return;
+            f.folder.emojis = f.folder.emojis.filter(function (x) { return x.id !== id; });
+            save();
+            render();
+            toast('削除しました');
+          });
+        });
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+      }
+    );
+  }
+
+  function openNameEditor(id) {
+    var found = getEmojiById(id);
+    if (!found) return;
+    var e = found.emoji;
+
+    openModal(
+      '<div class="modal-title"><span style="font-size:22px">' + escapeHtml(e.char) + '</span> の名前</div>' +
+      '<input id="nameInput" class="modal-input" type="text" maxlength="30" value="' + escapeHtml(e.name || '') + '" placeholder="例：笑顔">' +
+      '<div class="modal-actions">' +
+        '<button class="btn" data-act="clear" type="button">名前をクリア</button>' +
+        '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
+        '<button class="btn primary" data-act="ok" type="button">保存</button>' +
+      '</div>',
+      function (root) {
+        var inp = root.querySelector('#nameInput');
+        setTimeout(function () { inp.focus(); inp.select(); }, 60);
+
+        function commit(v) {
+          e.name = v.trim();
+          save();
+          render();
+          closeModal();
+        }
+
+        root.querySelector('[data-act="clear"]').addEventListener('click', function () {
+          commit('');
+        });
+        root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
+        root.querySelector('[data-act="ok"]').addEventListener('click', function () {
+          commit(inp.value);
+        });
+        inp.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(inp.value); }
+        });
+      }
+    );
+  }
+
+  /* ---- 編集モード：ドラッグ＆ドロップ ---- */
+  function startDrag(e, tile, id, folderId, char) {
+    var rect = tile.getBoundingClientRect();
+    dragState = {
       id: id,
       folderId: folderId,
+      char: char,
       tile: tile,
       x0: e.clientX,
       y0: e.clientY,
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      w: rect.width,
+      h: rect.height,
       active: false,
-      pid: e.pointerId
+      pid: e.pointerId,
+      raf: null
     };
+
     window.addEventListener('pointermove', onDragMove, { passive: false });
     window.addEventListener('pointerup', onDragEnd);
-    window.addEventListener('pointercancel', onDragEnd);
+    window.addEventListener('pointercancel', onDragCancel);
   }
 
   function onDragMove(e) {
-    if (!drag || e.pointerId !== drag.pid) return;
+    if (!dragState || e.pointerId !== dragState.pid) return;
 
-    var dx = e.clientX - drag.x0;
-    var dy = e.clientY - drag.y0;
+    dragState.pointerX = e.clientX;
+    dragState.pointerY = e.clientY;
 
-    if (!drag.active) {
-      if (Math.sqrt(dx * dx + dy * dy) < 9) return;
-      drag.active = true;
+    var dx = e.clientX - dragState.x0;
+    var dy = e.clientY - dragState.y0;
+
+    if (!dragState.active) {
+      if (Math.sqrt(dx * dx + dy * dy) < 7) return;
+      dragState.active = true;
       suppressTap = true;
 
-      var rect = drag.tile.getBoundingClientRect();
-      drag.w = rect.width;
-      drag.h = rect.height;
-
-      ghost = drag.tile.cloneNode(true);
+      // ゴースト生成
+      ghost = dragState.tile.cloneNode(true);
       ghost.classList.add('drag-ghost');
       ghost.classList.remove('dragging', 'drop-target');
-      ghost.style.width = rect.width + 'px';
-      ghost.style.height = rect.height + 'px';
+      ghost.style.width = dragState.w + 'px';
+      ghost.style.height = dragState.h + 'px';
 
-      var size = rect.width;
-      if (size > 100) ghost.style.fontSize = '72px';
-      else if (size > 70) ghost.style.fontSize = '42px';
-      else ghost.style.fontSize = '28px';
-
-      var gc = ghost.querySelector('.char');
-      if (gc) gc.style.fontSize = 'inherit';
+      var charEl = ghost.querySelector('.char');
+      if (charEl) {
+        var srcChar = dragState.tile.querySelector('.char');
+        if (srcChar) charEl.style.fontSize = srcChar.style.fontSize;
+      }
 
       document.body.appendChild(ghost);
-      drag.tile.classList.add('dragging');
-      document.body.classList.add('is-dragging');
+      dragState.tile.classList.add('dragging');
+      showInsertLine();
     }
 
     e.preventDefault();
 
-    ghost.style.transform =
-      'translate(' + (e.clientX - drag.w / 2) + 'px, ' + (e.clientY - drag.h / 2) + 'px)';
-
-    updateDropTarget(e.clientX, e.clientY);
+    if (!dragState.raf) {
+      dragState.raf = requestAnimationFrame(flushDrag);
+    }
   }
 
-  function updateDropTarget(x, y) {
-    var prevTab = tabsEl.querySelector('.tab.drop-target');
-    if (prevTab) prevTab.classList.remove('drop-target');
-    var prevTile = gridEl.querySelector('.tile.drop-target');
-    if (prevTile) prevTile.classList.remove('drop-target');
+  function flushDrag() {
+    dragState && (dragState.raf = null);
+    if (!dragState || !dragState.active) return;
 
-    dropTarget = null;
+    var gx = dragState.pointerX - dragState.offsetX;
+    var gy = dragState.pointerY - dragState.offsetY;
 
-    var el = document.elementFromPoint(x, y);
-    if (!el) return;
+    if (ghost) {
+      ghost.style.transform = 'translate3d(' + gx + 'px, ' + gy + 'px, 0)';
+    }
 
-    var tab = el.closest ? el.closest('.tab') : null;
-    if (tab && tab.dataset.folder) {
-      tab.classList.add('drop-target');
-      dropTarget = { type: 'folder', folderId: tab.dataset.folder };
+    updateInsertPosition(dragState.pointerX, dragState.pointerY);
+  }
+
+  function updateInsertPosition(x, y) {
+    // 同じステータス群のタイルのみを候補に
+    var found = getEmojiById(dragState.id);
+    if (!found) return;
+    var dragStatus = found.emoji.status;
+
+    var tiles = gridEl.querySelectorAll('.tile:not(.add-tile):not(.dragging)');
+    var candidates = [];
+    Array.prototype.forEach.call(tiles, function (t) {
+      var fe = getEmojiById(t.dataset.id);
+      if (fe && fe.emoji.status === dragStatus) candidates.push(t);
+    });
+
+    if (candidates.length === 0) {
+      dragInsert = null;
+      hideInsertLine();
       return;
     }
 
-    var tile = el.closest ? el.closest('.tile') : null;
-    if (tile && tile !== drag.tile && !tile.classList.contains('add-tile')) {
-      tile.classList.add('drop-target');
-      var r = tile.getBoundingClientRect();
-      var before = x < r.left + r.width / 2;
-      dropTarget = { type: 'tile', id: tile.dataset.id, before: before };
+    var nearest = null;
+    var minD2 = Infinity;
+    for (var i = 0; i < candidates.length; i++) {
+      var t = candidates[i];
+      var r = t.getBoundingClientRect();
+      var cx = r.left + r.width / 2;
+      var cy = r.top + r.height / 2;
+      var ddx = x - cx;
+      var ddy = y - cy;
+      var d2 = ddx * ddx + ddy * ddy;
+      if (d2 < minD2) { minD2 = d2; nearest = { tile: t, rect: r, cx: cx, cy: cy }; }
     }
+
+    if (!nearest) { hideInsertLine(); dragInsert = null; return; }
+
+    var before;
+    if (Math.abs(y - nearest.cy) > Math.abs(x - nearest.cx) * 0.6) {
+      // 縦方向の判定を優先
+      before = y < nearest.cy;
+    } else {
+      before = x < nearest.cx;
+    }
+
+    dragInsert = { targetId: nearest.tile.dataset.id, before: before };
+    positionInsertLine(nearest.rect, before);
+  }
+
+  function positionInsertLine(rect, before) {
+    if (!insertLineEl) return;
+    var gridRect = gridEl.getBoundingClientRect();
+    var left = rect.left - gridRect.left;
+    var top = rect.top - gridRect.top;
+
+    var gap = 8;
+    var lineW = 4;
+
+    if (before) {
+      left -= (gap / 2 + lineW / 2 - 1);
+    } else {
+      left += rect.width + gap / 2 - lineW / 2 + 1;
+    }
+
+    insertLineEl.style.left = left + 'px';
+    insertLineEl.style.top = top + 'px';
+    insertLineEl.style.height = rect.height + 'px';
   }
 
   function onDragEnd() {
     window.removeEventListener('pointermove', onDragMove);
     window.removeEventListener('pointerup', onDragEnd);
-    window.removeEventListener('pointercancel', onDragEnd);
+    window.removeEventListener('pointercancel', onDragCancel);
 
-    if (!drag) return;
-    var d = drag;
-    drag = null;
+    if (!dragState) return;
+    var d = dragState;
+    dragState = null;
+
+    if (d.raf) cancelAnimationFrame(d.raf);
 
     if (ghost) {
       if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
       ghost = null;
     }
     d.tile.classList.remove('dragging');
-    document.body.classList.remove('is-dragging');
-
-    Array.prototype.forEach.call(tabsEl.querySelectorAll('.tab.drop-target'), function (t) {
-      t.classList.remove('drop-target');
-    });
-    Array.prototype.forEach.call(gridEl.querySelectorAll('.tile.drop-target'), function (t) {
-      t.classList.remove('drop-target');
-    });
+    hideInsertLine();
 
     if (!d.active) {
       suppressTap = false;
       return;
     }
 
-    if (dropTarget) {
-      if (dropTarget.type === 'folder') {
-        moveToFolder(d.id, d.folderId, dropTarget.folderId);
-      } else {
-        reorderEmoji(d.id, d.folderId, dropTarget.id, dropTarget.before);
-      }
+    if (dragInsert) {
+      applyReorder(d.id, dragInsert.targetId, dragInsert.before);
     }
 
-    dropTarget = null;
+    dragInsert = null;
 
     setTimeout(function () { suppressTap = false; }, 0);
   }
 
-  function moveToFolder(id, fromId, toId) {
-    if (fromId === toId) return;
-    var from = getFolder(fromId);
-    var to = getFolder(toId);
-    if (!from || !to) return;
+  function onDragCancel() {
+    window.removeEventListener('pointermove', onDragMove);
+    window.removeEventListener('pointerup', onDragEnd);
+    window.removeEventListener('pointercancel', onDragCancel);
 
-    var idx = -1;
-    for (var i = 0; i < from.emojis.length; i++) {
-      if (from.emojis[i].id === id) { idx = i; break; }
-    }
-    if (idx === -1) return;
+    if (!dragState) return;
+    var d = dragState;
+    dragState = null;
 
-    var item = from.emojis.splice(idx, 1)[0];
-    to.emojis.push(item);
-    sortEmojis(to);
-
-    save();
-    render();
-    toast('「' + to.name + '」に移動しました');
+    if (d.raf) cancelAnimationFrame(d.raf);
+    if (ghost) { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost = null; }
+    d.tile.classList.remove('dragging');
+    hideInsertLine();
+    dragInsert = null;
+    suppressTap = false;
   }
 
-  function reorderEmoji(id, folderId, targetId, before) {
-    var folder = getFolder(folderId);
-    if (!folder) return;
+  function applyReorder(dragId, targetId, before) {
+    var folder = getActiveFolder();
 
-    var from = -1;
+    var dragIdx = -1;
     for (var i = 0; i < folder.emojis.length; i++) {
-      if (folder.emojis[i].id === id) { from = i; break; }
+      if (folder.emojis[i].id === dragId) { dragIdx = i; break; }
     }
-    if (from === -1) return;
+    if (dragIdx === -1) return;
 
-    var item = folder.emojis.splice(from, 1)[0];
+    var item = folder.emojis.splice(dragIdx, 1)[0];
 
-    var to = -1;
+    var targetIdx = -1;
     for (var j = 0; j < folder.emojis.length; j++) {
-      if (folder.emojis[j].id === targetId) { to = j; break; }
+      if (folder.emojis[j].id === targetId) { targetIdx = j; break; }
     }
-    if (to === -1) to = folder.emojis.length;
-    else if (!before) to += 1;
 
-    folder.emojis.splice(to, 0, item);
+    if (targetIdx === -1) {
+      folder.emojis.push(item);
+    } else {
+      folder.emojis.splice(before ? targetIdx : targetIdx + 1, 0, item);
+    }
+
     sortEmojis(folder);
-
     save();
     render();
   }
 
-  /* =========================================================
+  /* =====================================================
      下部入力欄
-  ========================================================= */
+  ===================================================== */
   function autoGrow() {
     inputArea.style.height = 'auto';
     inputArea.style.height = Math.min(inputArea.scrollHeight, 130) + 'px';
@@ -1560,17 +1990,10 @@
     try { inputArea.setSelectionRange(pos, pos); } catch (e) {}
 
     autoGrow();
-    inputArea.classList.add('flash');
-    setTimeout(function () { inputArea.classList.remove('flash'); }, 150);
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (err) {} }
   }
 
   inputArea.addEventListener('input', autoGrow);
-
-  $('clearInputBtn').addEventListener('click', function () {
-    inputArea.value = '';
-    autoGrow();
-    inputArea.focus();
-  });
 
   $('copyInputBtn').addEventListener('click', function () {
     var text = inputArea.value;
@@ -1604,9 +2027,31 @@
     }
   }
 
-  /* =========================================================
+  /* =====================================================
+     ズーム・選択防止
+  ===================================================== */
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+  document.addEventListener('gestureend', function (e) { e.preventDefault(); });
+
+  document.addEventListener('contextmenu', function (e) {
+    if (e.target.closest && e.target.closest('.tile, .tab, .icon-btn, .app-title')) {
+      e.preventDefault();
+    }
+  });
+
+  var lastTouchEnd = 0;
+  document.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTouchEnd <= 320) {
+      if (e.cancelable) e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  /* =====================================================
      初期化
-  ========================================================= */
+  ===================================================== */
   loadState();
   applyCols(loadCols());
 
@@ -1616,7 +2061,7 @@
 
   render();
   autoGrow();
-  save();  // 旧形式から移行した場合は新形式で保存
+  save(); // 旧形式から移行した場合に新形式で保存
 })();
 </script>
 </body>
