@@ -155,6 +155,9 @@
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .tabs::-webkit-scrollbar { display: none; }
 
@@ -389,7 +392,7 @@
     bottom: 0;
     z-index: 60;
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: flex-end;
     padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
     background: rgba(20,24,33,.96);
@@ -416,9 +419,9 @@
   }
   #inputArea:focus { border-color: var(--accent); }
 
-  #copyInputBtn {
+  .bottom-btn {
     height: 42px;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 12px;
     border: 1px solid var(--border);
     background: var(--panel);
@@ -429,8 +432,19 @@
     flex: 0 0 auto;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  #copyInputBtn:active { background: var(--panel2); }
+  .bottom-btn:active { background: var(--panel2); }
+  .bottom-btn.clear {
+    width: 42px;
+    padding: 0;
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .bottom-btn.clear:active { color: var(--danger); }
 
   /* ---- Modal ---- */
   .modal-root {
@@ -618,7 +632,8 @@
 
 <div class="bottom-bar">
   <textarea id="inputArea" rows="1" placeholder="絵文字をタップ"></textarea>
-  <button id="copyInputBtn" type="button">コピー</button>
+  <button class="bottom-btn" id="copyInputBtn" type="button">コピー</button>
+  <button class="bottom-btn clear" id="clearInputBtn" type="button" title="クリア">✕</button>
 </div>
 
 <div class="modal-root hidden" id="modalRoot">
@@ -637,10 +652,10 @@
   /* =====================================================
      定数
   ===================================================== */
-  var STORAGE_KEY   = 'emoji-registry-v5';
-  var LEGACY_KEYS   = ['emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
-  var COLS_KEY      = 'emoji-registry-cols-v5';
-  var NAMES_KEY     = 'emoji-registry-names-v5';
+  var STORAGE_KEY   = 'emoji-registry-v6';
+  var LEGACY_KEYS   = ['emoji-registry-v5', 'emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
+  var COLS_KEY      = 'emoji-registry-cols-v6';
+  var NAMES_KEY     = 'emoji-registry-names-v6';
 
   var STATUS_ORDER = { favorite: 0, normal: 1, unused: 2 };
 
@@ -703,6 +718,261 @@
   }
 
   /* =====================================================
+     CLDR 日本語名データベース
+     ===================================================== */
+  var CLDR_JA_NAMES = (function () {
+    var db = {
+      // 顔・感情
+      '😀': 'にっこり', '😃': 'わらい', '😄': 'うれしなき', '😁': 'にこにこ',
+      '😆': 'けんめい', '😅': 'あせ', '🤣': 'わらいころげる', '😂': 'うれしなき',
+      '🙂': 'ほほえみ', '😊': 'えがお', '😇': 'てんし', '🥰': 'ほれぼれ',
+      '😍': 'めがはーと', '🤩': 'ほしめ', '😘': 'キス', '😗': 'キス',
+      '😚': 'キス', '😙': 'キス', '🥲': 'なみだ', '😋': 'おいしい',
+      '😛': 'べー', '😜': 'べー', '🤪': 'ふざける', '😝': 'べー',
+      '🤑': 'おかね', '🤗': 'ハグ', '🤭': 'くちをおさえる', '🤫': 'しー',
+      '🤔': 'かんがえる', '🤐': 'くちをとじる', '🤨': 'かお', '😐': 'むひょうじょう',
+      '😑': 'むひょうじょう', '😶': 'くちなし', '😏': 'にやり', '😒': 'ふまん',
+      '🙄': 'しかめっつら', '😬': 'しかめっつら', '🤥': 'うそつき', '😌': 'あんしん',
+      '😔': 'しょんぼり', '😪': 'ねむい', '🤤': 'よだれ', '😴': 'ねている',
+      '😷': 'マスク', '🤒': 'ねつ', '🤕': 'けが', '🤢': 'きもちわるい',
+      '🤮': 'おうと', '🤧': 'くしゃみ', '🥵': 'あつい', '🥶': 'さむい',
+      '🥴': 'ふらふら', '😵': 'めまい', '🤯': 'あたまがはじける', '🤠': 'カウボーイ',
+      '🥳': 'パーティー', '🥸': 'めがね', '😎': 'サングラス', '🤓': 'オタク',
+      '🧐': 'モノクル', '😕': 'こんらん', '😟': 'しんぱい', '🙁': 'しかめっつら',
+      '😮': 'びっくり', '😯': 'びっくり', '😲': 'びっくり', '😳': 'あかはじ',
+      '🥺': 'うるうる', '😦': 'しかめっつら', '😧': 'しかめっつら', '😨': 'こわい',
+      '😰': 'あせ', '😥': 'あんしん', '😢': 'なみだ', '😭': 'おおなき',
+      '😱': 'さけぶ', '😖': 'しかめっつら', '😣': 'しかめっつら', '😞': 'しょんぼり',
+      '😓': 'あせ', '😩': 'つかれた', '😫': 'つかれた', '🥱': 'あくび',
+      '😤': 'いき', '😡': 'おこり', '😠': 'おこり', '🤬': 'おこり',
+      '😈': 'あくま', '👿': 'あくま', '💀': 'ドクロ', '☠️': 'ドクロ',
+      '💩': 'うんち', '🤡': 'ピエロ', '👹': 'おに', '👺': 'てんぐ',
+      '👻': 'おばけ', '👽': 'エイリアン', '👾': 'うちゅうじん', '🤖': 'ロボット',
+      '😺': 'ねこ', '😸': 'ねこ', '😹': 'ねこ', '😻': 'ねこ',
+      '😼': 'ねこ', '😽': 'ねこ', '🙀': 'ねこ', '😿': 'ねこ',
+      '😾': 'ねこ', '🙈': 'さる', '🙉': 'さる', '🙊': 'さる',
+      // 人・体
+      '👋': 'てをふる', '🤚': 'てのこう', '🖐️': 'て', '✋': 'て',
+      '🖖': 'バルカン', '👌': 'OK', '🤌': 'つまむ', '🤏': 'つまむ',
+      '✌️': 'ピース', '🤞': 'クロス', '🤟': 'あいしてる', '🤘': 'ロック',
+      '🤙': 'でんわ', '👈': 'ひだり', '👉': 'みぎ', '👆': 'うえ',
+      '🖕': 'ゆび', '👇': 'した', '☝️': 'うえ', '👍': 'いいね',
+      '👎': 'だめ', '✊': 'こぶし', '👊': 'こぶし', '🤛': 'こぶし',
+      '🤜': 'こぶし', '👏': 'はくしゅ', '🙌': 'ばんざい', '👐': 'て',
+      '🤲': 'て', '🤝': 'あくしゅ', '🙏': 'おねがい', '✍️': 'かく',
+      '💅': 'ネイル', '🤳': 'セルフィー', '💪': 'ちからこぶ', '🦾': 'ロボット',
+      '🦿': 'ロボット', '🦵': 'あし', '🦶': 'あし', '👂': 'みみ',
+      '🦻': 'みみ', '👃': 'はな', '🧠': 'のう', '🫀': 'しんぞう',
+      '🫁': 'はい', '🦷': 'は', '🦴': 'ほね', '👀': 'め',
+      '👁️': 'め', '👅': 'した', '👄': 'くち', '🫦': 'くちびる',
+      // 動物・自然
+      '🐶': 'いぬ', '🐱': 'ねこ', '🐭': 'ねずみ', '🐹': 'ハムスター',
+      '🐰': 'うさぎ', '🦊': 'キツネ', '🐻': 'くま', '🐼': 'パンダ',
+      '🐨': 'コアラ', '🐯': 'とら', '🦁': 'ライオン', '🐮': 'うし',
+      '🐷': 'ぶた', '🐸': 'かえる', '🐵': 'さる', '🐔': 'にわとり',
+      '🐧': 'ペンギン', '🐦': 'とり', '🐤': 'ひよこ', '🦆': 'あひる',
+      '🦅': 'わし', '🦉': 'ふくろう', '🦇': 'こうもり', '🐺': 'おおかみ',
+      '🐗': 'いのしし', '🐴': 'うま', '🦄': 'ユニコーン', '🐝': 'はち',
+      '🐛': 'むし', '🦋': 'ちょう', '🐌': 'かたつむり', '🐞': 'てんとうむし',
+      '🐜': 'あり', '🦗': 'コオロギ', '🕷️': 'くも', '🦂': 'さそり',
+      '🐢': 'かめ', '🐍': 'へび', '🦎': 'とかげ', '🦖': 'ティラノサウルス',
+      '🦕': 'きょうりゅう', '🐙': 'タコ', '🦑': 'イカ', '🦐': 'エビ',
+      '🦞': 'ロブスター', '🦀': 'カニ', '🐡': 'ふぐ', '🐠': 'さかな',
+      '🐟': 'さかな', '🐬': 'イルカ', '🐳': 'くじら', '🦈': 'サメ',
+      '🐊': 'ワニ', '🐅': 'とら', '🐆': 'ヒョウ', '🦓': 'シマウマ',
+      '🦍': 'ゴリラ', '🦧': 'オランウータン', '🐘': 'ぞう', '🦛': 'カバ',
+      '🦏': 'サイ', '🐪': 'ラクダ', '🐫': 'ラクダ', '🦒': 'キリン',
+      '🦘': 'カンガルー', '🐃': 'すいぎゅう', '🐂': 'おうし', '🐄': 'うし',
+      '🐎': 'うま', '🐖': 'ぶた', '🐏': 'ひつじ', '🐑': 'ひつじ',
+      '🦙': 'ラマ', '🐐': 'やぎ', '🦌': 'しか', '🐕': 'いぬ',
+      '🐩': 'プードル', '🦮': 'いぬ', '🐈': 'ねこ', '🪶': 'はね',
+      '🐓': 'にわとり', '🦃': 'シチメンチョウ', '🦤': 'ドードー', '🦚': 'クジャク',
+      '🦜': 'オウム', '🦢': 'はくちょう', '🦩': 'フラミンゴ', '🕊️': 'はと',
+      '🐇': 'うさぎ', '🦝': 'アライグマ', '🦨': 'スカンク', '🦡': 'アナグマ',
+      '🦦': 'カワウソ', '🦥': 'ナマケモノ', '🐁': 'ねずみ', '🐀': 'ねずみ',
+      '🐿️': 'リス', '🦔': 'ハリネズミ',
+      // 植物
+      '🌸': 'さくら', '💮': 'はな', '🏵️': 'はな', '🌹': 'バラ',
+      '🥀': 'しおれたはな', '🌺': 'ハイビスカス', '🌻': 'ひまわり', '🌼': 'はな',
+      '🌷': 'チューリップ', '🌱': 'め', '🪴': 'しょくぶつ', '🌲': 'まつのき',
+      '🌳': 'き', '🌴': 'ヤシ', '🌵': 'サボテン', '🌾': 'いね',
+      '🌿': 'はっぱ', '☘️': 'クローバー', '🍀': 'よつばのクローバー', '🍁': 'かえで',
+      '🍂': 'おちば', '🍃': 'はっぱ',
+      // 食べ物
+      '🍇': 'ぶどう', '🍈': 'メロン', '🍉': 'すいか', '🍊': 'みかん',
+      '🍋': 'レモン', '🍌': 'バナナ', '🍍': 'パイナップル', '🥭': 'マンゴー',
+      '🍎': 'りんご', '🍏': 'りんご', '🍐': 'なし', '🍑': 'もも',
+      '🍒': 'さくらんぼ', '🍓': 'いちご', '🫐': 'ブルーベリー', '🥝': 'キウイ',
+      '🍅': 'トマト', '🫒': 'オリーブ', '🥥': 'ココナッツ', '🥑': 'アボカド',
+      '🍆': 'なす', '🥔': 'じゃがいも', '🥕': 'にんじん', '🌽': 'とうもろこし',
+      '🌶️': 'とうがらし', '🫑': 'ピーマン', '🥒': 'きゅうり', '🥬': 'はっぱ',
+      '🥦': 'ブロッコリー', '🧄': 'にんにく', '🧅': 'たまねぎ', '🍄': 'きのこ',
+      '🥜': 'ピーナッツ', '🍞': 'パン', '🥐': 'クロワッサン', '🥖': 'パン',
+      '🫓': 'ナン', '🥨': 'プレッツェル', '🥯': 'ベーグル', '🥞': 'パンケーキ',
+      '🧇': 'ワッフル', '🧀': 'チーズ', '🍖': 'にく', '🍗': 'とりにく',
+      '🥩': 'ステーキ', '🥓': 'ベーコン', '🍔': 'ハンバーガー', '🍟': 'ポテト',
+      '🍕': 'ピザ', '🌭': 'ホットドッグ', '🥪': 'サンドイッチ', '🌮': 'タコス',
+      '🌯': 'ブリトー', '🫔': 'タマレ', '🥙': 'ピタ', '🧆': 'ファラフェル',
+      '🥚': 'たまご', '🍳': 'めだまやき', '🥘': 'なべ', '🍲': 'なべ',
+      '🫕': 'チーズフォンデュ', '🥣': 'スープ', '🥗': 'サラダ', '🍿': 'ポップコーン',
+      '🧈': 'バター', '🧂': 'しお', '🥫': 'かんづめ', '🍱': 'べんとう',
+      '🍘': 'おかき', '🍙': 'おにぎり', '🍚': 'ごはん', '🍛': 'カレー',
+      '🍜': 'ラーメン', '🍝': 'パスタ', '🍠': 'さつまいも', '🍢': 'おでん',
+      '🍣': 'すし', '🍤': 'てんぷら', '🍥': 'なると', '🥮': 'げっぺい',
+      '🍡': 'だんご', '🥟': 'ぎょうざ', '🥠': 'フォーチュンクッキー', '🥡': 'テイクアウト',
+      '🍦': 'アイスクリーム', '🍧': 'かきごおり', '🍨': 'アイスクリーム', '🍩': 'ドーナツ',
+      '🍪': 'クッキー', '🎂': 'バースデーケーキ', '🍰': 'ケーキ', '🧁': 'カップケーキ',
+      '🥧': 'パイ', '🍫': 'チョコレート', '🍬': 'キャンディ', '🍭': 'ロリポップ',
+      '🍮': 'プリン', '🍯': 'はちみつ', '🍼': 'ほにゅうびん', '🥛': 'ミルク',
+      '☕': 'コーヒー', '🫖': 'ティーポット', '🍵': 'おちゃ', '🍶': 'さけ',
+      '🍾': 'シャンパン', '🍷': 'ワイン', '🍸': 'カクテル', '🍹': 'トロピカル',
+      '🍺': 'ビール', '🍻': 'ビール', '🥂': 'かんぱい', '🥃': 'ウイスキー',
+      '🥤': 'ジュース', '🧋': 'タピオカ', '🧃': 'ジュース', '🧉': 'マテ茶',
+      // 旅行・場所
+      '🚗': 'くるま', '🚕': 'タクシー', '🚙': 'くるま', '🚌': 'バス',
+      '🚎': 'バス', '🏎️': 'レースカー', '🚓': 'パトカー', '🚑': 'きゅうきゅうしゃ',
+      '🚒': 'しょうぼうしゃ', '🚐': 'バン', '🛻': 'トラック', '🚚': 'トラック',
+      '🚛': 'トラック', '🚜': 'トラクター', '🏍️': 'バイク', '🛵': 'スクーター',
+      '🚲': 'じてんしゃ', '🛴': 'キックボード', '🚨': 'サイレン', '🚔': 'パトカー',
+      '🚍': 'バス', '🚘': 'くるま', '🚖': 'タクシー', '🚡': 'ロープウェイ',
+      '🚠': 'ロープウェイ', '🚟': 'ロープウェイ', '🚃': 'でんしゃ', '🚋': 'でんしゃ',
+      '🚞': 'でんしゃ', '🚝': 'モノレール', '🚄': 'しんかんせん', '🚅': 'しんかんせん',
+      '🚈': 'でんしゃ', '🚂': 'きかんしゃ', '🚆': 'でんしゃ', '🚇': 'ちかてつ',
+      '🚊': 'でんしゃ', '🚉': 'えき', '✈️': 'ひこうき', '🛫': 'ひこうき',
+      '🛬': 'ひこうき', '🛩️': 'ひこうき', '💺': 'シート', '🛰️': 'じんこうえいせい',
+      '🚀': 'ロケット', '🛸': 'ユーフォー', '🚁': 'ヘリコプター', '🛶': 'カヌー',
+      '⛵': 'ヨット', '🚤': 'スピードボート', '🛥️': 'ボート', '🛳️': 'ふね',
+      '⛴️': 'フェリー', '🚢': 'ふね', '⚓': 'いかり', '⛽': 'ガソリンスタンド',
+      '🚧': 'こうじ', '🚦': 'しんごう', '🚥': 'しんごう', '🗺️': 'ちず',
+      '🗿': 'モアイ', '🗽': 'じゆうのめがみ', '🗼': 'とうきょうタワー', '🏰': 'しろ',
+      '🏯': 'しろ', '🏟️': 'スタジアム', '🎡': 'かんらんしゃ', '🎢': 'ジェットコースター',
+      '🎠': 'メリーゴーランド', '⛲': 'ふんすい', '⛱️': 'パラソル', '🏖️': 'ビーチ',
+      '🏝️': 'しま', '🏜️': 'さばく', '🌋': 'かざん', '⛰️': 'やま',
+      '🏔️': 'やま', '🗻': 'ふじさん', '🏕️': 'キャンプ', '⛺': 'テント',
+      '🏠': 'いえ', '🏡': 'いえ', '🏢': 'ビル', '🏣': 'ゆうびんきょく',
+      '🏤': 'ゆうびんきょく', '🏥': 'びょういん', '🏦': 'ぎんこう', '🏨': 'ホテル',
+      '🏩': 'ラブホテル', '🏪': 'コンビニ', '🏫': 'がっこう', '🏬': 'デパート',
+      '🏭': 'こうじょう', '🏮': 'ちょうちん', '🏰': 'しろ',
+      // 趣味・スポーツ
+      '⚽': 'サッカー', '🏀': 'バスケットボール', '🏈': 'アメリカンフットボール', '⚾': 'やきゅう',
+      '🥎': 'ソフトボール', '🎾': 'テニス', '🏐': 'バレーボール', '🏉': 'ラグビー',
+      '🥏': 'フライングディスク', '🎱': 'ビリヤード', '🪀': 'ヨーヨー', '🏓': 'ピンポン',
+      '🏸': 'バドミントン', '🏒': 'アイスホッケー', '🏑': 'ホッケー', '🥍': 'ラクロス',
+      '🏏': 'クリケット', '🪃': 'ブーメラン', '🥅': 'ゴール', '⛳': 'ゴルフ',
+      '🪁': 'たこ', '🏹': 'アーチェリー', '🎣': 'つり', '🤿': 'ダイビング',
+      '🥊': 'ボクシング', '🥋': 'どうぎ', '🎽': 'ランニングシャツ', '🛹': 'スケートボード',
+      '🛼': 'ローラースケート', '🛷': 'そり', '⛸️': 'スケート', '🥌': 'カーリング',
+      '🎿': 'スキー', '⛷️': 'スキー', '🏂': 'スノーボード', '🪂': 'パラシュート',
+      '🏋️': 'ウエイトリフティング', '🤼': 'レスリング', '🤸': 'たいそう', '⛹️': 'バスケットボール',
+      '🤺': 'フェンシング', '🤾': 'ハンドボール', '🏌️': 'ゴルフ', '🏇': 'けいば',
+      '🧘': 'ヨガ', '🏄': 'サーフィン', '🏊': 'すいえい', '🤽': '水球',
+      '🚣': 'ボート', '🧗': 'クライミング', '🚵': 'マウンテンバイク', '🚴': 'サイクリング',
+      '🏆': 'トロフィー', '🥇': 'きんメダル', '🥈': 'ぎんメダル', '🥉': 'どうメダル',
+      '🏅': 'メダル', '🎖️': 'メダル', '🏵️': 'リボン', '🎗️': 'リボン',
+      '🎫': 'チケット', '🎟️': 'チケット',
+      // 音楽・芸術
+      '🎨': 'パレット', '🎬': 'えいが', '🎤': 'マイク', '🎧': 'ヘッドホン',
+      '🎼': 'おんがく', '🎵': 'おんぷ', '🎶': 'おんぷ', '🎹': 'ピアノ',
+      '🥁': 'ドラム', '🪘': 'ドラム', '🎷': 'サックス', '🎺': 'トランペット',
+      '🪗': 'アコーディオン', '🎸': 'ギター', '🪕': 'バンジョー', '🎻': 'バイオリン',
+      '🪈': 'フルート', '🎲': 'サイコロ', '♟️': 'チェスのこま', '🎯': 'ダーツ',
+      '🎳': 'ボウリング', '🎮': 'ゲーム', '🎰': 'スロット', '🧩': 'パズル',
+      // 乗り物・その他
+      '⌚': 'とけい', '📱': 'スマホ', '📲': 'スマホ', '💻': 'パソコン',
+      '⌨️': 'キーボード', '🖥️': 'パソコン', '🖨️': 'プリンター', '🖱️': 'マウス',
+      '🖲️': 'トラックボール', '🕹️': 'ジョイスティック', '🗜️': 'クランプ', '💽': 'ディスク',
+      '💾': 'フロッピー', '💿': 'ディスク', '📀': 'ディスク', '📼': 'ビデオテープ',
+      '📷': 'カメラ', '📸': 'カメラ', '📹': 'ビデオカメラ', '🎥': 'えいがカメラ',
+      '📽️': 'プロジェクター', '🎞️': 'フィルム', '📞': 'でんわ', '☎️': 'でんわ',
+      '📟': 'ポケベル', '📠': 'ファックス', '📺': 'テレビ', '📻': 'ラジオ',
+      '🎙️': 'マイク', '🎚️': 'スライダー', '🎛️': 'つまみ', '🧭': 'コンパス',
+      '⏱️': 'ストップウォッチ', '⏲️': 'タイマー', '⏰': 'めざましどけい', '🕰️': 'とけい',
+      '⌛': 'すなどけい', '⏳': 'すなどけい', '📡': 'アンテナ', '🔋': 'バッテリー',
+      '🪫': 'バッテリー', '🔌': 'コンセント', '💡': 'でんきゅう', '🔦': 'かいちゅうでんとう',
+      '🕯️': 'ろうそく', '🪔': 'ランプ', '🧯': 'しょうかき', '🛢️': 'オイル',
+      '💸': 'おかね', '💵': 'おかね', '💴': 'おかね', '💶': 'おかね',
+      '💷': 'おかね', '💰': 'おかねぶくろ', '💳': 'カード', '💎': 'ダイヤ',
+      '⚖️': 'てんびん', '🪜': 'はしご', '🧰': 'どうぐばこ', '🪛': 'ドライバー',
+      '🔧': 'レンチ', '🔨': 'ハンマー', '⚒️': 'ハンマー', '🛠️': 'ハンマー',
+      '⛏️': 'つるはし', '🪚': 'のこぎり', '🔩': 'ボルト', '⚙️': 'ギア',
+      '🪤': 'ねずみとり', '🧱': 'れんが', '⛓️': 'チェーン', '🧲': 'じしゃく',
+      '🔫': 'ピストル', '💣': 'ばくだん', '🧨': 'かんしゃく', '🪓': 'おの',
+      '🔪': 'ほうちょう', '🗡️': 'たんけん', '⚔️': 'クロスソード', '🛡️': 'シールド',
+      '🚬': 'タバコ', '⚰️': 'かんおけ', '🪦': 'はか', '⚱️': 'つぼ',
+      '🏺': 'つぼ', '🔮': 'すいしょうだま', '📿': 'じゅず', '🧿': 'おまもり',
+      '💈': 'びよういん', '⚗️': 'フラスコ', '🔭': 'ぼうえんきょう', '🔬': 'けんびきょう',
+      '🕳️': 'あな', '🩹': 'ばんそうこう', '🩺': 'しんちょうけい', '💊': 'くすり',
+      '💉': 'ちゅうしゃ', '🩸': 'ち', '🧬': 'DNA', '🦠': 'ばいきん',
+      '🧫': 'シャーレ', '🧪': 'しけんかん', '🌡️': 'おんどけい', '🧹': 'ほうき',
+      '🧺': 'かご', '🧻': 'トイレットペーパー', '🚽': 'トイレ', '🚰': 'みず',
+      '🚿': 'シャワー', '🛁': 'おふろ', '🛀': 'おふろ', '🧼': 'せっけん',
+      '🪥': 'はブラシ', '🪒': 'かみそり', '🧽': 'スポンジ', '🪣': 'バケツ',
+      '🧴': 'ローション', '🛎️': 'ベル', '🔑': 'かぎ', '🗝️': 'かぎ',
+      '🚪': 'ドア', '🪑': 'いす', '🛋️': 'ソファ', '🛏️': 'ベッド',
+      '🛌': 'ベッド', '🧸': 'テディベア', '🪆': 'マトリョーシカ', '🖼️': 'がぞう',
+      '🪞': 'かがみ', '🪟': 'まど', '🛍️': 'ショッピングバッグ', '🛒': 'カート',
+      '🎁': 'プレゼント', '🎈': 'ふうせん', '🎏': 'こいのぼり', '🎀': 'リボン',
+      '🎊': 'くすだま', '🎉': 'パーティー', '🎎': 'ひなにんぎょう', '🏮': 'ちょうちん',
+      '🎐': 'ふうりん', '🧧': 'おとしだま', '✉️': 'てがみ', '📩': 'メール',
+      '📨': 'メール', '📧': 'メール', '💌': 'ラブレター', '📥': 'トレイ',
+      '📤': 'トレイ', '📦': 'にもつ', '🏷️': 'ラベル', '📪': 'ポスト',
+      '📫': 'ポスト', '📬': 'ポスト', '📭': 'ポスト', '📮': 'ポスト',
+      '📯': 'ホルン', '📜': 'まきもの', '📃': 'ページ', '📄': 'ページ',
+      '📑': 'しおり', '🧾': 'レシート', '📊': 'グラフ', '📈': 'グラフ',
+      '📉': 'グラフ', '🗒️': 'ノート', '🗓️': 'カレンダー', '📆': 'カレンダー',
+      '📅': 'カレンダー', '📇': 'カード', '🗃️': 'カード', '🗳️': 'はこ',
+      '🗄️': 'きゃびねっと', '📋': 'クリップボード', '📁': 'フォルダ', '📂': 'フォルダ',
+      '🗂️': 'フォルダ', '🗞️': 'しんぶん', '📰': 'しんぶん', '📓': 'ノート',
+      '📔': 'ノート', '📒': 'ノート', '📕': 'ほん', '📗': 'ほん',
+      '📘': 'ほん', '📙': 'ほん', '📚': 'ほん', '📖': 'ほん',
+      '🔖': 'しおり', '🧷': 'ピン', '🔗': 'リンク', '📎': 'クリップ',
+      '🖇️': 'クリップ', '📐': 'じょうぎ', '📏': 'じょうぎ', '🧮': 'そろばん',
+      '📌': 'ピン', '📍': 'ピン', '✂️': 'はさみ', '🖊️': 'ペン',
+      '🖋️': 'ペン', '✒️': 'ペン', '🖌️': 'ふで', '🖍️': 'クレヨン',
+      '📝': 'メモ', '✏️': 'えんぴつ', '🔍': 'かがみ', '🔎': 'かがみ',
+      '🔏': 'かぎ', '🔐': 'かぎ', '🔒': 'かぎ', '🔓': 'かぎ',
+      // 記号
+      '❤️': 'ハート', '🧡': 'ハート', '💛': 'ハート', '💚': 'ハート',
+      '💙': 'ハート', '💜': 'ハート', '🖤': 'ハート', '🤍': 'ハート',
+      '🤎': 'ハート', '💔': 'こわれたハート', '❣️': 'ハート', '💕': 'ハート',
+      '💞': 'ハート', '💓': 'ハート', '💗': 'ハート', '💖': 'ハート',
+      '💘': 'ハート', '💝': 'ハート', '💟': 'ハート', '☮️': 'ピース',
+      '✝️': 'クロス', '☪️': 'イスラム', '🕉️': 'オーム', '☸️': 'ダルマ',
+      '✡️': 'ダビデ', '🔱': 'トライデント', '⚛️': 'アトム', '☯️': 'インヤン',
+      '☦️': 'クロス', '🛐': '礼拝', '⛎': 'へびつかい', '♈': 'おひつじ',
+      '♉': 'おうし', '♊': 'ふたご', '♋': 'かに', '♌': 'しし',
+      '♍': 'おとめ', '♎': 'てんびん', '♏': 'さそり', '♐': 'いて',
+      '♑': 'やぎ', '♒': 'みずがめ', '♓': 'うお', '🆔': 'ID',
+      '⚕️': 'いりょう', '♻️': 'リサイクル', '⚜️': 'ユリ', '🔰': 'わかばマーク',
+      '✅': 'チェック', '☑️': 'チェック', '✔️': 'チェック', '❌': 'ばつ',
+      '❎': 'ばつ', '➕': 'プラス', '➖': 'マイナス', '➗': 'わる',
+      '✖️': 'かける', '🟰': 'イコール', '♾️': 'むげん', '‼️': 'びっくり',
+      '⁉️': 'びっくり', '❓': 'はてな', '❔': 'はてな', '❕': 'びっくり',
+      '❗': 'びっくり', '〰️': 'ウェーブ', '💱': 'りょうがえ', '💲': 'ドル',
+      '⚕️': 'いりょう', '♻️': 'リサイクル', '⚜️': 'ユリ', '🔱': 'トライデント',
+      '📵': 'きんし', '🔞': 'きんし', '☢️': 'ほうしゃのう', '☣️': 'きけん',
+      '⬆️': 'うえ', '↗️': 'みぎうえ', '➡️': 'みぎ', '↘️': 'みぎした',
+      '⬇️': 'した', '↙️': 'ひだりした', '⬅️': 'ひだり', '↖️': 'ひだりうえ',
+      '↕️': 'じょうげ', '↔️': 'さゆう', '↩️': 'もどる', '↪️': 'すすむ',
+      '⤴️': 'あがる', '⤵️': 'さがる', '🔃': 'かいてん', '🔄': 'かいてん',
+      '🔙': 'もどる', '🔚': 'おわり', '🔛': 'オン', '🔜': 'すぐ',
+      '🔝': 'トップ'
+    };
+    return db;
+  })();
+
+  function getCldrName(char) {
+    if (CLDR_JA_NAMES[char]) return CLDR_JA_NAMES[char];
+    // 異体字セレクタ付きの場合、基本文字で再検索
+    var base = char.replace(/\uFE0F/g, '');
+    if (base !== char && CLDR_JA_NAMES[base]) return CLDR_JA_NAMES[base];
+    // 肌色バリエーションの場合、基底絵文字で再検索
+    var noSkin = base.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '');
+    if (noSkin !== base && CLDR_JA_NAMES[noSkin]) return CLDR_JA_NAMES[noSkin];
+    return '';
+  }
+
+  /* =====================================================
      データ正規化
   ===================================================== */
   function normalizeEmojis(arr) {
@@ -713,17 +983,32 @@
       var item = arr[i];
 
       if (typeof item === 'string') {
-        if (item) out.push({ id: uuid(), char: item, status: 'normal', name: '' });
+        if (item) {
+          out.push({
+            id: uuid(), char: item, status: 'normal',
+            name: getCldrName(item), nameAuto: true
+          });
+        }
         continue;
       }
 
       if (item && typeof item === 'object' && typeof item.char === 'string' && item.char) {
         var st = (item.status === 'favorite' || item.status === 'unused') ? item.status : 'normal';
+        var name = (typeof item.name === 'string') ? item.name : '';
+        var nameAuto = false;
+
+        // 名前が空で、旧データに nameAuto フラグがない場合 → CLDR から自動補完
+        if (!name && !item.nameAuto) {
+          var auto = getCldrName(item.char);
+          if (auto) { name = auto; nameAuto = true; }
+        }
+
         out.push({
           id: item.id || uuid(),
           char: item.char,
           status: st,
-          name: typeof item.name === 'string' ? item.name : ''
+          name: name,
+          nameAuto: nameAuto
         });
       }
     }
@@ -805,7 +1090,7 @@
 
   function save() {
     storageSet(STORAGE_KEY, JSON.stringify({
-      version: 5,
+      version: 6,
       folders: state.folders,
       activeFolderId: state.activeFolderId
     }));
@@ -942,7 +1227,6 @@
       var base = Math.min(w, h);
       var hasName = tile.classList.contains('has-name') && showNames;
 
-      // 名前表示時は少し縮めて上に寄せる
       var factor = hasName ? 0.52 : 0.86;
       char.style.fontSize = (base * factor) + 'px';
       char.style.transform = hasName ? 'translateY(-12%)' : '';
@@ -1000,13 +1284,16 @@
     var timer = null;
     var longPressed = false;
 
-    function start() {
+    function start(e) {
       if (suppressTap) return;
+      // 文字選択を防止
+      e.preventDefault();
       longPressed = false;
       clearTimeout(timer);
       timer = setTimeout(function () {
         longPressed = true;
         openTabMenu(folder);
+        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
       }, 480);
     }
 
@@ -1302,7 +1589,10 @@
           var added = 0;
           emojis.forEach(function (ch) {
             if (!existing[ch]) {
-              folder.emojis.push({ id: uuid(), char: ch, status: 'normal', name: '' });
+              folder.emojis.push({
+                id: uuid(), char: ch, status: 'normal',
+                name: getCldrName(ch), nameAuto: true
+              });
               existing[ch] = true;
               added++;
             }
@@ -1465,7 +1755,7 @@
 
   function exportAll() {
     var data = {
-      version: 5,
+      version: 6,
       app: 'emoji-registry',
       exportedAt: new Date().toISOString(),
       folders: state.folders,
@@ -1539,7 +1829,11 @@
             target.emojis.forEach(function (e) { chars[e.char] = true; });
             f.emojis.forEach(function (e) {
               if (!chars[e.char]) {
-                target.emojis.push({ id: uuid(), char: e.char, status: e.status, name: e.name || '' });
+                target.emojis.push({
+                  id: uuid(), char: e.char, status: e.status,
+                  name: e.name || getCldrName(e.char),
+                  nameAuto: e.nameAuto || false
+                });
                 chars[e.char] = true;
                 added++;
               }
@@ -1614,21 +1908,13 @@
     startGesture(e, tile, id, folderId, char);
   });
 
-  /* ---- 通常モード：タップ・スワイプ・長押し ---- */
+  /* ---- 通常モード ---- */
   function startGesture(e, tile, id, folderId, char) {
     gesture = {
-      id: id,
-      folderId: folderId,
-      char: char,
-      tile: tile,
-      x0: e.clientX,
-      y0: e.clientY,
-      dx: 0,
-      swiping: false,
-      longPressed: false,
-      moved: false,
-      pid: e.pointerId,
-      longTimer: null
+      id: id, folderId: folderId, char: char, tile: tile,
+      x0: e.clientX, y0: e.clientY, dx: 0,
+      swiping: false, longPressed: false, moved: false,
+      pid: e.pointerId, longTimer: null
     };
 
     gesture.longTimer = setTimeout(function () {
@@ -1654,10 +1940,7 @@
 
     if (dist > 8) {
       gesture.moved = true;
-      if (gesture.longTimer) {
-        clearTimeout(gesture.longTimer);
-        gesture.longTimer = null;
-      }
+      if (gesture.longTimer) { clearTimeout(gesture.longTimer); gesture.longTimer = null; }
     }
 
     if (!gesture.swiping) {
@@ -1696,10 +1979,7 @@
       return;
     }
 
-    if (!g.swiping) {
-      insertEmojiToInput(g.char);
-      return;
-    }
+    if (!g.swiping) { insertEmojiToInput(g.char); return; }
 
     if (g.dx < -55) setStatus(g.id, 'favorite');
     else if (g.dx > 55) setStatus(g.id, 'unused');
@@ -1790,10 +2070,15 @@
     if (!found) return;
     var e = found.emoji;
 
+    var cldrName = getCldrName(e.char);
+    var hint = cldrName ? 'CLDR名: ' + cldrName : '';
+
     openModal(
       '<div class="modal-title"><span style="font-size:22px">' + escapeHtml(e.char) + '</span> の名前</div>' +
+      (hint ? '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">' + escapeHtml(hint) + '</div>' : '') +
       '<input id="nameInput" class="modal-input" type="text" maxlength="30" value="' + escapeHtml(e.name || '') + '" placeholder="例：笑顔">' +
       '<div class="modal-actions">' +
+        (cldrName ? '<button class="btn" data-act="auto" type="button">CLDR名を使う</button>' : '') +
         '<button class="btn" data-act="clear" type="button">名前をクリア</button>' +
         '<button class="btn" data-act="cancel" type="button">キャンセル</button>' +
         '<button class="btn primary" data-act="ok" type="button">保存</button>' +
@@ -1802,8 +2087,9 @@
         var inp = root.querySelector('#nameInput');
         setTimeout(function () { inp.focus(); inp.select(); }, 60);
 
-        function commit(v) {
+        function commit(v, auto) {
           e.name = (v || '').trim();
+          e.nameAuto = !!auto;
           save();
           render();
           closeModal();
@@ -1815,15 +2101,21 @@
           }
         }
 
+        var autoBtn = root.querySelector('[data-act="auto"]');
+        if (autoBtn) {
+          autoBtn.addEventListener('click', function () {
+            commit(cldrName, true);
+          });
+        }
         root.querySelector('[data-act="clear"]').addEventListener('click', function () {
-          commit('');
+          commit('', false);
         });
         root.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);
         root.querySelector('[data-act="ok"]').addEventListener('click', function () {
-          commit(inp.value);
+          commit(inp.value, false);
         });
         inp.addEventListener('keydown', function (ev) {
-          if (ev.key === 'Enter') { ev.preventDefault(); commit(inp.value); }
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(inp.value, false); }
         });
       }
     );
@@ -1833,21 +2125,12 @@
   function startDrag(e, tile, id, folderId, char) {
     var rect = tile.getBoundingClientRect();
     dragState = {
-      id: id,
-      folderId: folderId,
-      char: char,
-      tile: tile,
-      x0: e.clientX,
-      y0: e.clientY,
-      pointerX: e.clientX,
-      pointerY: e.clientY,
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top,
-      w: rect.width,
-      h: rect.height,
-      active: false,
-      pid: e.pointerId,
-      raf: null
+      id: id, folderId: folderId, char: char, tile: tile,
+      x0: e.clientX, y0: e.clientY,
+      pointerX: e.clientX, pointerY: e.clientY,
+      offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top,
+      w: rect.width, h: rect.height,
+      active: false, pid: e.pointerId, raf: null
     };
 
     window.addEventListener('pointermove', onDragMove, { passive: false });
@@ -2089,6 +2372,14 @@
     }
   });
 
+  $('clearInputBtn').addEventListener('click', function () {
+    if (!inputArea.value) { toast('空です'); return; }
+    inputArea.value = '';
+    autoGrow();
+    inputArea.focus();
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (err) {} }
+  });
+
   function fallbackCopy(text) {
     try {
       var ta = document.createElement('textarea');
@@ -2107,14 +2398,30 @@
   }
 
   /* =====================================================
-     ズーム・選択防止
+     ズーム・文字選択防止
   ===================================================== */
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
   document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
   document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
+  // 文字選択そのものを防止（textarea/input は除外）
+  document.addEventListener('selectstart', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    e.preventDefault();
+  });
+
+  // 長押しでの iOS コールアウトを防止
+  document.addEventListener('touchstart', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    if (t && t.closest && t.closest('.tile, .tab, .icon-btn, .app-title, .col-control, .bottom-btn')) {
+      // 何もしない（CSS の -webkit-touch-callout で対応済み）
+    }
+  }, { passive: true });
+
   document.addEventListener('contextmenu', function (e) {
-    if (e.target.closest && e.target.closest('.tile, .tab, .icon-btn, .app-title, .col-control')) {
+    if (e.target.closest && e.target.closest('.tile, .tab, .icon-btn, .app-title, .col-control, .bottom-btn')) {
       e.preventDefault();
     }
   });
