@@ -2494,4 +2494,49 @@
   document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
   document.addEventListener('gestureend', function (e) { e.preventDefault(); });
 
-  // 全要素で選択開始を禁止（input / textarea のみ
+  // 全要素で選択開始を禁止（input / textarea のみ許可）
+  document.addEventListener('selectstart', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    e.preventDefault();
+  }, { passive: false });
+
+  // 念のため dblclick による選択も防止
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('contextmenu', function (e) {
+    var t = e.target;
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
+    e.preventDefault();
+  });
+
+  var lastTouchEnd = 0;
+  document.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTouchEnd <= 320) {
+      if (e.cancelable) e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  /* =====================================================
+     初期化
+  ===================================================== */
+  loadState();
+  applyCols(loadCols());
+
+  if (!storageAvailable) {
+    $('storageWarning').classList.add('show');
+  }
+
+  render();
+  autoGrow();
+  save();
+})();
+</script>
+</body>
+</html>
