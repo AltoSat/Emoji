@@ -152,14 +152,17 @@
     justify-content: center;
   }
 
+  /* タブ：横スクロールを許可 */
   .tabs {
     display: flex;
     gap: 7px;
     overflow-x: auto;
+    overflow-y: hidden;
     padding: 4px 10px 10px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
+    overscroll-behavior-x: contain;
   }
   .tabs::-webkit-scrollbar { display: none; }
 
@@ -177,6 +180,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     font-family: inherit;
+    touch-action: pan-x;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
     transition: background .15s, color .15s, border-color .15s;
   }
   .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -337,7 +344,7 @@
   body.mode-edit .tile.add-tile { touch-action: manipulation; }
   body.mode-select .tile { touch-action: pan-y; }
   body.mode-edit .tab,
-  body.mode-select .tab { touch-action: manipulation; }
+  body.mode-select .tab { touch-action: pan-x; }
 
   .tile.dragging { opacity: .18; }
 
@@ -679,10 +686,10 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY   = 'emoji-registry-v9';
-  var LEGACY_KEYS   = ['emoji-registry-v8', 'emoji-registry-v7', 'emoji-registry-v6', 'emoji-registry-v5', 'emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
-  var COLS_KEY      = 'emoji-registry-cols-v9';
-  var NAMES_KEY     = 'emoji-registry-names-v9';
+  var STORAGE_KEY   = 'emoji-registry-v10';
+  var LEGACY_KEYS   = ['emoji-registry-v9', 'emoji-registry-v8', 'emoji-registry-v7', 'emoji-registry-v6', 'emoji-registry-v5', 'emoji-registry-v4', 'emoji-registry-v3', 'emoji-registry-v2', 'emoji-registry-v1'];
+  var COLS_KEY      = 'emoji-registry-cols-v10';
+  var NAMES_KEY     = 'emoji-registry-names-v10';
 
   var STATUS_ORDER = { favorite: 0, normal: 1, unused: 2 };
 
@@ -1085,7 +1092,7 @@
 
   function save() {
     storageSet(STORAGE_KEY, JSON.stringify({
-      version: 9,
+      version: 10,
       folders: state.folders,
       activeFolderId: state.activeFolderId
     }));
@@ -1160,15 +1167,11 @@
     );
   }
 
-  /* 入力欄を確実に選択状態にする */
   function focusAndSelectInput(inp) {
     if (!inp) return;
     setTimeout(function () {
-      try {
-        inp.focus({ preventScroll: false });
-      } catch (e) {
-        try { inp.focus(); } catch (e2) {}
-      }
+      try { inp.focus({ preventScroll: false }); }
+      catch (e) { try { inp.focus(); } catch (e2) {} }
       try {
         if (typeof inp.setSelectionRange === 'function') {
           var len = (inp.value || '').length;
@@ -1181,7 +1184,7 @@
   }
 
   /* =====================================================
-     列数変更（アンカータイル維持）
+     列数変更（FLIPアニメーション）
   ===================================================== */
   function getAnchorTile() {
     var tiles = gridEl.querySelectorAll('.tile:not(.add-tile)');
@@ -1199,41 +1202,107 @@
     return tiles[0];
   }
 
-  function applyCols(cols, keepScroll) {
-    cols = Math.max(COLS_MIN, Math.min(COLS_MAX, cols));
+  function applyCols(newCols, animate) {
+    newCols = Math.max(COLS_MIN, Math.min(COLS_MAX, newCols));
+    var oldCols = parseInt(gridEl.dataset.cols, 10) || COLS_DEFAULT;
+    if (oldCols === newCols) return;
 
-    var cur = parseInt(gridEl.dataset.cols, 10) || COLS_DEFAULT;
-    if (cur === cols) return;
+    var changed = function () {
+      gridEl.dataset.cols = String(newCols);
+      colValue.textContent = String(newCols);
+      colDecBtn.disabled = (newCols <= COLS_MIN);
+      colIncBtn.disabled = (newCols >= COLS_MAX);
+      storageSet(COLS_KEY, String(newCols));
+    };
 
-    var anchor = null;
-    var oldTop = 0;
+    // アニメーションなし
+    if (animate === false) {
+      changed();
+      requestAnimationFrame(scheduleResizeEmojis);
+      return;
+    }
 
-    if (keepScroll !== false) {
-      anchor = getAnchorTile();
-      if (anchor) {
-        oldTop = anchor.getBoundingClientRect().top;
+    // ---- FLIPアニメーション ----
+    var anchor = getAnchorTile();
+    var anchorTopBefore = anchor ? anchor.getBoundingClientRect().top : 0;
+
+    var tiles = Array.prototype.slice.call(gridEl.querySelectorAll('.tile'));
+    if (!tiles.length) {
+      changed();
+      requestAnimationFrame(scheduleResizeEmojis);
+      return;
+    }
+
+    var firstRects = tiles.map(function (t) {
+      var r = t.getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height };
+    });
+
+    changed();
+    resizeTileChars();
+
+    void gridEl.offsetHeight;
+
+    if (anchor && anchor.parentNode) {
+      var anchorTopAfter = anchor.getBoundingClientRect().top;
+      var dy = anchorTopAfter - anchorTopBefore;
+      if (Math.abs(dy) > 0.5) {
+        window.scrollBy(0, dy);
+        void gridEl.offsetHeight;
       }
     }
 
-    gridEl.dataset.cols = String(cols);
-    colValue.textContent = String(cols);
-    colDecBtn.disabled = (cols <= COLS_MIN);
-    colIncBtn.disabled = (cols >= COLS_MAX);
-    storageSet(COLS_KEY, String(cols));
+    var lastRects = tiles.map(function (t) {
+      var r = t.getBoundingClientRect();
+      return { left: r.left, top: r.top, width: r.width, height: r.height };
+    });
 
-    // フォントサイズ再計算 → その後、アンカー位置を合わせる
+    var anyMoved = false;
+    tiles.forEach(function (t, i) {
+      var f = firstRects[i];
+      var l = lastRects[i];
+      var dx = f.left - l.left;
+      var dy2 = f.top - l.top;
+      var sx = l.width > 0 ? f.width / l.width : 1;
+      var sy = l.height > 0 ? f.height / l.height : 1;
+
+      if (Math.abs(dx) < 0.5 && Math.abs(dy2) < 0.5 &&
+          Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) {
+        return;
+      }
+      anyMoved = true;
+      t.style.transition = 'none';
+      t.style.transformOrigin = 'top left';
+      t.style.transform = 'translate(' + dx + 'px, ' + dy2 + 'px) scale(' + sx + ', ' + sy + ')';
+      t.style.zIndex = '5';
+      t.style.willChange = 'transform';
+    });
+
+    if (!anyMoved) {
+      scheduleResizeEmojis();
+      return;
+    }
+
     requestAnimationFrame(function () {
-      resizeTileChars();
       requestAnimationFrame(function () {
-        if (anchor && anchor.parentNode) {
-          var newTop = anchor.getBoundingClientRect().top;
-          var diff = newTop - oldTop;
-          if (Math.abs(diff) > 0.5) {
-            window.scrollBy(0, diff);
-          }
-        }
+        tiles.forEach(function (t) {
+          if (!t.style.transform) return;
+          t.style.transition = 'transform .34s cubic-bezier(.22,.61,.36,1)';
+          t.style.transform = '';
+        });
       });
     });
+
+    setTimeout(function () {
+      tiles.forEach(function (t) {
+        t.style.transition = '';
+        t.style.transform = '';
+        t.style.transformOrigin = '';
+        t.style.zIndex = '';
+        t.style.willChange = '';
+      });
+      scheduleResizeEmojis();
+    }, 380);
   }
 
   function loadCols() {
@@ -1332,45 +1401,78 @@
     tabsEl.appendChild(addBtn);
   }
 
+  /* タブ：横スクロールを妨げずに長押し検出 */
   function attachTabHandlers(el, folder) {
     var timer = null;
     var longPressed = false;
+    var moved = false;
+    var startX = 0, startY = 0;
+    var activePid = null;
 
-    function start(e) {
-      if (suppressTap) return;
-      if (e.cancelable) e.preventDefault();
-      longPressed = false;
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        longPressed = true;
-        openTabMenu(folder);
-        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
-      }, 480);
+    function onWindowMove(ev) {
+      if (ev.pointerId !== activePid) return;
+      if (moved) return;
+      var dx = ev.clientX - startX;
+      var dy = ev.clientY - startY;
+      if (Math.sqrt(dx * dx + dy * dy) > 8) {
+        moved = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
     }
 
-    function cancel() {
-      clearTimeout(timer);
-      timer = null;
+    function cleanup() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      window.removeEventListener('pointermove', onWindowMove);
+      window.removeEventListener('pointerup', onWindowUp);
+      window.removeEventListener('pointercancel', onWindowCancel);
+      activePid = null;
     }
 
-    el.addEventListener('pointerdown', start);
-    el.addEventListener('pointerup', function () {
-      cancel();
+    function onWindowUp(ev) {
+      if (ev.pointerId !== activePid) return;
+      var wasLong = longPressed;
+      var wasMoved = moved;
+      cleanup();
       if (suppressTap) return;
-      if (longPressed) return;
+      if (wasLong || wasMoved) return;
       if (state.activeFolderId !== folder.id) {
         state.activeFolderId = folder.id;
         clearSelection();
         save();
         render();
       }
+    }
+
+    function onWindowCancel(ev) {
+      if (ev.pointerId !== activePid) return;
+      cleanup();
+    }
+
+    el.addEventListener('pointerdown', function (e) {
+      if (suppressTap) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      longPressed = false;
+      moved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      activePid = e.pointerId;
+
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        longPressed = true;
+        suppressTap = true;
+        openTabMenu(folder);
+        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
+        setTimeout(function () { suppressTap = false; }, 300);
+      }, 480);
+
+      window.addEventListener('pointermove', onWindowMove);
+      window.addEventListener('pointerup', onWindowUp);
+      window.addEventListener('pointercancel', onWindowCancel);
     });
-    el.addEventListener('pointerleave', cancel);
-    el.addEventListener('pointercancel', cancel);
+
     el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    el.addEventListener('touchstart', function (e) {
-      if (e.cancelable) e.preventDefault();
-    }, { passive: false });
   }
 
   function renderGrid() {
@@ -1588,7 +1690,6 @@
     toast(added + ' 個を「' + to.name + '」に移動しました');
   }
 
-  /* 単一絵文字のフォルダ移動 */
   function openFolderPickerForEmoji(emojiId) {
     var found = getEmojiById(emojiId);
     if (!found) return;
@@ -1631,7 +1732,6 @@
     }
     if (idx === -1) return;
 
-    // 移動先に同じ絵文字があるかチェック
     var exists = to.emojis.some(function (e) { return e.char === found.emoji.char; });
     if (exists) {
       toast('移動先に同じ絵文字があります');
@@ -1647,9 +1747,6 @@
     toast('「' + to.name + '」に移動しました');
   }
 
-  /* =====================================================
-     絵文字パース
-  ===================================================== */
   function parseEmojis(text) {
     var segments;
     if (typeof Intl !== 'undefined' && Intl.Segmenter) {
@@ -1719,9 +1816,6 @@
     );
   }
 
-  /* =====================================================
-     フォルダ操作
-  ===================================================== */
   function openFolderCreate() {
     openModal(
       '<div class="modal-title">新しいフォルダ</div>' +
@@ -1777,7 +1871,6 @@
   }
 
   function refreshTabMenuPosition(folder) {
-    // モーダル内の位置表示を更新
     var posEl = modalPanel.querySelector('#tabPosition');
     if (!posEl) return;
     var idx = -1;
@@ -1887,9 +1980,6 @@
     });
   }
 
-  /* =====================================================
-     メインメニュー
-  ===================================================== */
   var pendingImportMode = 'replace';
 
   function openMainMenu() {
@@ -1923,7 +2013,7 @@
 
   function exportAll() {
     var data = {
-      version: 9,
+      version: 10,
       app: 'emoji-registry',
       exportedAt: new Date().toISOString(),
       folders: state.folders,
@@ -2023,9 +2113,6 @@
     reader.readAsText(file);
   });
 
-  /* =====================================================
-     タイル操作
-  ===================================================== */
   var suppressTap = false;
   var gesture = null;
   var dragState = null;
@@ -2083,7 +2170,6 @@
     startGesture(e, tile, id, folderId, char);
   });
 
-  /* ---- 選択モード ---- */
   function startSelectDrag(e, tile) {
     var id = tile.dataset.id;
     var action = selected[id] ? 'remove' : 'add';
@@ -2170,7 +2256,6 @@
     selectDrag = null;
   }
 
-  /* ---- 通常モード ---- */
   function startGesture(e, tile, id, folderId, char) {
     gesture = {
       id: id, folderId: folderId, char: char, tile: tile,
@@ -2243,7 +2328,6 @@
     }
 
     if (!g.swiping) {
-      // 指を離した位置のタイルを取得して入力
       var upTile = null;
       if (e && typeof e.clientX === 'number') {
         upTile = getTileAt(e.clientX, e.clientY);
@@ -2289,7 +2373,6 @@
     else toast('通常に戻しました');
   }
 
-  /* ---- 絵文字メニュー ---- */
   function openEmojiMenu(id) {
     var found = getEmojiById(id);
     if (!found) return;
@@ -2403,7 +2486,6 @@
     );
   }
 
-  /* ---- 編集モード：ドラッグ ---- */
   function startDrag(e, tile, id, folderId, char) {
     var rect = tile.getBoundingClientRect();
     dragState = {
@@ -2611,9 +2693,6 @@
     render();
   }
 
-  /* =====================================================
-     下部入力欄
-  ===================================================== */
   function autoGrow() {
     inputArea.style.height = 'auto';
     inputArea.style.height = Math.min(inputArea.scrollHeight, 130) + 'px';
@@ -2645,7 +2724,6 @@
     if (!text) { toast('空です'); return; }
 
     var after = function () {
-      // コピー後にテキストを空にする
       inputArea.value = '';
       autoGrow();
       toast('コピーしました');
@@ -2695,9 +2773,6 @@
     }
   }
 
-  /* =====================================================
-     ズーム・選択防止
-  ===================================================== */
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
   document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
   document.addEventListener('gestureend', function (e) { e.preventDefault(); });
@@ -2729,9 +2804,6 @@
     lastTouchEnd = now;
   }, { passive: false });
 
-  /* =====================================================
-     初期化
-  ===================================================== */
   loadState();
   applyCols(loadCols(), false);
 
